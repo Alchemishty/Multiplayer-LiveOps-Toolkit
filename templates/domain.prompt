@@ -1,0 +1,24 @@
+Analyze this Unity/C# codebase and produce a domain.md document. This document maps the project's domain concepts and asserts networking/serialization standards.
+
+## Domain Mapping (describe what you find)
+
+1. **Glossary** — define the key domain terms used in the codebase (class names, game mechanics, data types). Table format: Term | Definition.
+2. **State Ownership Model** — who owns what state? What's server-authoritative vs client-predicted vs local-only? Table: State | Owner | Sync Method.
+3. **API/Backend Contracts** — if there are REST calls or external integrations, document endpoints and response patterns.
+
+## Networking Standards (assert these if project uses any networking library)
+
+Regardless of what the existing code does, these rules apply to all new and modified networking code:
+
+- **Lifecycle Ordering:** Awake (local refs only, no NetworkVariable access) → OnNetworkSpawn (subscribe to OnValueChanged, read initial values, safe for RPCs) → Start → OnNetworkDespawn (unsubscribe, cleanup) → OnDestroy (local cleanup only).
+- **OnValueChanged does NOT fire for initial value.** Always read current value explicitly in OnNetworkSpawn: `OnValueChanged += handler; handler(default, variable.Value);`
+- **Always call base.OnNetworkSpawn() and base.OnNetworkDespawn().** Skipping these breaks internal Netcode initialization.
+- **Never subscribe to OnValueChanged in Awake.** The NetworkVariable isn't initialized yet.
+- **Never unsubscribe in OnDestroy instead of OnNetworkDespawn.** OnNetworkDespawn fires first for networked objects.
+- **Validate all deserialized NetworkVariable payloads.** JSON in NetworkVariables can be null or malformed — always null-check after deserialization.
+- **RPCs cannot be called before OnNetworkSpawn.** This fails silently.
+- **Always check IsOwner/IsServer before modifying owner-write NetworkVariables.** Non-owner writes fail silently.
+
+If the project doesn't use networking, skip the networking section entirely.
+
+Use actual class names. Keep it under 100 lines. Start with ## Glossary.

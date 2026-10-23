@@ -1,0 +1,55 @@
+# Unity-generated state and player builds
+/[Ll]ibrary/
+/[Tt]emp/
+/[Oo]bj/
+/[Ll]ogs/
+/[Bb]uilds/
+/UserSettings/
+/MemoryCaptures/
+/Recordings/
+
+# IDE and OS output
+.vs/
+.idea/
+*.csproj
+*.sln
+*.suo
+*.user
+.DS_Store
+
+# Agent and test artifacts
+*.log
+/mono_crash.*.json
+/scratch/
+/Assets/InitTestScene*.unity
+/Assets/InitTestScene*.unity.meta
+/Assets/Screenshots/
+/Assets/Screenshots.meta
+
+# Python backend state and secrets
+**/__pycache__/
+*.py[cod]
+**/.venv/
+**/venv/
+**/.pytest_cache/
+**/.mypy_cache/
+**/.ruff_cache/
+**/*.egg-info/
+*.sqlite3
+*.sqlite3-*
+*.db
+*.db-*
+.env
+.env.*
+!.env.example
+*.pem
+*.key
+*.p12
+*.pfx
+*.keystore
+*.jks
+/backend/staticfiles/
+/backend/media/
+/backend/data/
+/backend/.coverage
+/backend/htmlcov/

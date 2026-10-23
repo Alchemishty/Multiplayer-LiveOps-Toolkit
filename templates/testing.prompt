@@ -1,0 +1,23 @@
+Analyze this Unity/C# codebase and produce a testing.md document. This document assesses the current test state and asserts the testing standards for all new code.
+
+## Current Test State (describe what you find)
+
+1. **Test Infrastructure** — what test framework is used? Where are tests? What assembly definitions exist?
+2. **Existing Coverage** — what's tested? What patterns are used? If there are no tests, say so.
+3. **Testability Assessment** — which classes have logic that should be extracted into pure C# for EditMode testing?
+
+## Testing Standards (assert these regardless)
+
+Every code change — bug fix, feature, or refactor — must include tests. These rules apply to all new code:
+
+- **EditMode Tests (Unit Tests)** — located in `Assets/Tests/EditMode/`. Test pure C# logic: data validation, serialization, business rules, catalog lookups. No MonoBehaviour, no GameObject, no ScriptableObject.CreateInstance. Use AAA pattern (Arrange, Act, Assert). Name tests: `MethodUnderTest_Condition_ExpectedResult`.
+
+- **PlayMode Tests (Integration Tests)** — located in `Assets/Tests/PlayMode/`. Test MonoBehaviour lifecycle, NetworkBehaviour sync, singleton initialization, scene setup. Use `[UnityTest]` returning IEnumerator for anything needing frames. Clean up spawned GameObjects in TearDown.
+
+- **Extraction Rule:** If business logic lives inside a MonoBehaviour and can't be tested in EditMode, extract it into a pure C# class. The MonoBehaviour becomes thin wiring — it calls the pure class and handles Unity lifecycle.
+
+- **Coverage Priorities:** (1) Data layer serialization and validation, (2) Business rules and validators, (3) Registry/singleton initialization, (4) Network sync round-trips, (5) UI wiring.
+
+- **What NOT to test:** Unity's built-in types, third-party library internals, serialization of primitives that Unity already handles.
+
+Use actual class names from the codebase for the assessment. Keep it under 100 lines. Start with ## Test Infrastructure.

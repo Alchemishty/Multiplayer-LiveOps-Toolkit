@@ -1,0 +1,19 @@
+Analyze this Unity/C# codebase and produce an architecture.md document. This document serves two purposes: (1) map the architecture as it actually exists, and (2) assert structural standards that must be followed in all new and modified code.
+
+## Existing Architecture (describe what you find)
+
+1. **Layer Model** — identify the namespace/folder layers and their import direction. Show which layers depend on which. If there's no clear layering, document what exists.
+2. **Key Types** — list the most important classes per layer with one-line descriptions.
+3. **Bootstrap Ordering** — if there are singletons or initialization dependencies, document the required startup sequence.
+4. **Singleton Policy** — list any singletons, their lifetime, and access patterns.
+
+## Structural Standards (assert these regardless)
+
+After mapping existing architecture, assert these standards for all new code:
+
+- **Layer boundaries are import-enforced.** Lower layers must not reference higher layers. If the existing code violates this, note the violation but enforce the rule going forward.
+- **NetworkBehaviour Boundaries:** NetworkBehaviours contain ONLY: NetworkVariable declarations, OnValueChanged callbacks, RPCs, lifecycle (OnNetworkSpawn/OnNetworkDespawn), ownership checks. All business logic, validation, and data transformation goes in pure C# classes that can be tested in EditMode.
+- **Singleton access must throw on null.** `Registry.Instance ?? throw new InvalidOperationException(...)` — never `if (Instance == null) return`.
+- **Scene composition contracts.** Every scene should validate its required objects in the earliest Awake. Missing required object = throw, not silent degradation.
+
+Use actual class names from the codebase. Keep it under 100 lines. Start with ## Layer Model.

@@ -1,0 +1,86 @@
+version: 1
+
+project:
+  name: MultiplayerLiveOpsToolkit
+  description: "Unity multiplayer live-ops toolkit with accessory system, shop, wallet, and real-time avatar sync"
+  type: existing
+
+stack:
+  language: csharp
+  framework: unity
+  backend: rest-api
+  test_framework: unity-test-framework
+  linter: unity-compiler
+  packages:
+    - "com.unity.netcode.gameobjects@1.9.1"
+    - "com.unity.textmeshpro"
+    - "com.unity.purchasing"
+    - "Newtonsoft.Json"
+
+commands:
+  # These are MCP tool invocations, not shell commands.
+  # Use via mcp__UnityMCP__refresh_unity, mcp__UnityMCP__read_console, mcp__UnityMCP__run_tests
+  analyze:
+    step_1: "mcp: refresh_unity"
+    step_2: "mcp: read_console — check for zero errors"
+  test: "mcp: run_tests"
+  test_editmode: "mcp: run_tests with testMode=EditMode"
+  test_playmode: "mcp: run_tests with testMode=PlayMode"
+  refresh: "mcp: refresh_unity"
+
+verification:
+  method: unity-mcp
+  max_retries: 3
+  on_fail: fix
+  checks:
+    - name: compilation
+      tool: refresh_unity
+      then: read_console
+      pass_condition: "zero errors in console output"
+    - name: tests
+      tool: run_tests
+      pass_condition: "all tests pass"
+
+docs:
+  root: "docs/"
+  architecture: "docs/architecture.md"
+  conventions: "docs/conventions.md"
+  domain: "docs/domain.md"
+  testing: "docs/testing.md"
+  plans_active: "docs/plans/active/"
+  plans_completed: "docs/plans/completed/"
+  decisions: "docs/decisions/"
+  memory: "memory/"
+  scratch: "scratch/"
+
+enforcement:
+  import_direction:
+    enabled: true
+    layers:
+      - Data
+      - API
+      - Registry
+      - Player
+      - UI
+      - Example
+    rule: "lower layers must not reference higher layers"
+  custom_rules: "enforcement/"
+  coding_rules:
+    null_safety: "never-silent"
+    principles: "SOLID"
+    naming: "fully-descriptive"
+    data_structures: "game-design-aware"
+
+gardening:
+  enabled: true
+  trigger: manual
+  skip_directories:
+    - "Library/"
+    - "Temp/"
+    - "Logs/"
+    - "obj/"
+    - "TextMesh Pro/"
+  skip_extensions:
+    - ".meta"
+    - ".unity"
+    - ".asset"

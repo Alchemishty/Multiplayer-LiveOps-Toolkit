@@ -1,0 +1,23 @@
+Analyze this Unity/C# codebase and produce a conventions.md document. This document serves two purposes: (1) describe the conventions ACTUALLY USED in the code so the agent understands the existing patterns, and (2) assert mandatory quality standards that must be followed in all new and modified code, even if the existing codebase doesn't follow them yet.
+
+## Existing Patterns (describe what you find)
+
+For each section below, show real examples from the codebase with actual class/method names:
+
+1. **Null Handling** — how does this codebase currently handle nulls? Document the patterns you see.
+2. **Naming** — what naming patterns are used? Any abbreviations, prefixes, inconsistencies?
+3. **Data Lifecycle** — how is data classified? ScriptableObjects, SerializeField, runtime state?
+4. **Async Patterns** — coroutines, async/await, UniTask, events?
+5. **File Organization** — member ordering in existing files?
+
+## Mandatory Standards (assert these regardless of existing code)
+
+After describing existing patterns, assert these non-negotiable standards for all new and modified code. If the existing code violates these, note it as a debt to fix:
+
+- **Null Safety:** Never silently consume null. If a value must be non-null for the mechanism to work, throw with a message identifying what's missing and where. Use `TryGetComponent` / `TryGet` only when absence is a valid state.
+- **SOLID Principles:** Single Responsibility (one class = one reason to change), Open/Closed (extend via ScriptableObjects and composition, not modification), Liskov (honor base lifecycle contracts, always call base.OnNetworkSpawn), Interface Segregation (small focused interfaces), Dependency Inversion (depend on abstractions/registries not concrete MonoBehaviours).
+- **Naming:** Fully descriptive names. No abbreviations (sel→selectedItem, gld→gold, itms→items). Booleans read as questions (isLoading, hasAuthority). Collections named by contents (equippedItemIds not list1).
+- **Performance:** No GetComponent/Find in Update or per-frame methods — cache in Awake/OnNetworkSpawn. No allocations in hot paths. No Debug.Log without #if UNITY_EDITOR.
+- **Serialization Safety:** Every deserialization must be null-checked. Never assume response shape. Use FormerlySerializedAs on renames.
+
+Format as markdown. Keep it under 140 lines. Start with ## Existing Patterns, then ## Mandatory Standards.
