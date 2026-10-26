@@ -96,6 +96,6 @@ For contributors, [technical architecture](docs/architecture.md) and [testing](d
 
 The reusable package lives in `Unity/Packages/com.alchemishty.multiplayer-liveops-toolkit/`; the demo is under `Unity/Assets/`, and the backend is under `backend/`. Demo changes are synchronized to the package sample with `python3 tools/sync_full_demo.py`.
 
-## Distribution and credits
+## License
 
-Multiplayer LiveOps Toolkit is an open-source project distributed through GitHub. Third-party art and dependencies retain their own license terms; see [third-party notices](Unity/Assets/Models/CREDITS.md) for attribution and links.
+Toolkit code is licensed under [MIT](LICENSE). Demo art and third-party dependencies retain their own licenses; see [demo credits](Unity/Assets/Models/CREDITS.md).

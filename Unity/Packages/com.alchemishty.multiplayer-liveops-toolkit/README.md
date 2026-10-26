@@ -11,3 +11,5 @@ Version `0.1.0-preview.1` is a development preview. Demo art is confined to the 
 [Equipment visuals](Documentation~/equipment-visuals.md) provides configurable mesh/skinned cosmetics, avatar bindings, pooling and local preview/public equipment presentation. Supply your own character/cosmetic assets or use the Full Demo sample.
 
 [Full Demo setup](Samples~/FullDemo/README.md) describes importing the complete playable example. [Avatar integration](Documentation~/full-demo.md) covers the reusable package pieces.
+
+Toolkit code is licensed under [MIT](LICENSE.md). Demo art and dependencies retain their own licenses.

@@ -16,5 +16,6 @@
             "description": "Complete playable multiplayer demo with character art, cosmetics and TMP UI. Requires TextMeshPro, uGUI, TMP Essentials and the reference backend.",
             "path": "Samples~/FullDemo"
         }
-    ]
+    ],
+    "license": "MIT"
 }

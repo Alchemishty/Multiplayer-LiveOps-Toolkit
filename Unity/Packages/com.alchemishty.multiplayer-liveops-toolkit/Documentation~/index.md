@@ -62,7 +62,7 @@ Add the package name to the project's `testables` and install Test Framework 1.3
 
 The repository's `tools/verify_package_consumer.py` exercises a fresh project without TMP, portable tests, a local preview-version update preserving consumer scene/file bytes, and native SDK/custom UI consumers against isolated Django. This qualifies the current installation/update flow; future API-breaking upgrades need explicit migration guidance. Never edit installed package source to configure a game. Imported Samples belong in consumer Assets; reimport with overwrite can replace sample customizations.
 
-Final Windows/platform/security checks, package licensing and Asset Store submission remain pending. Unity 6 and non-cosmetic inventory are outside this preview.
+Additional platform and security qualification remains pending. Unity 6 and non-cosmetic inventory are outside this preview.
 
 ## Optional visual customization
 

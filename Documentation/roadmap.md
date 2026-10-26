@@ -7,7 +7,6 @@ The current toolkit includes the account modules, cosmetic rendering, multiplaye
 - [ ] Detect idle backend outages and disconnect gracefully. Authentication/renewal and handshake failures already disconnect; there is no separate idle-health monitor.
 - [ ] Qualify Windows client builds and two-instance multiplayer execution.
 - [ ] Define and qualify Linux/server operating-system targets and Unity's dedicated-server build target. Existing headless checks use a macOS desktop player with `-batchmode -nographics`.
-- [ ] Select and record the toolkit code's open-source license. Demo art attribution and its separate license are already [recorded](../Unity/Assets/Models/CREDITS.md).
 
 ## Planned expansion
 
