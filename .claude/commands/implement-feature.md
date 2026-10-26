@@ -11,10 +11,10 @@ Full orchestrator: plan → TDD implementation → verification → cleanup → 
 
 ## Phase 1 — Planning
 
-1. Check if a plan exists in `docs/plans/active/` for this feature
-2. If no plan exists: invoke superpowers:brainstorming to design the feature, then superpowers:writing-plans to create the implementation plan
-3. Save the plan to `docs/plans/active/YYYY-MM-DD-<topic>.md`
-4. Create a task list from the plan steps
+1. Read the relevant implementation guidance and `Documentation/roadmap.md` for current scope.
+2. Plan only the concrete feature requested.
+3. If a written plan is useful during implementation, keep it temporarily in `scratch/`.
+4. Create a task list from the plan steps; do not archive completed plans in docs/.
 
 ## Phase 2 — Implementation Loop
 
@@ -79,7 +79,7 @@ Verbose tool output (Unity console dumps, test results, large diffs) should be:
 ## Phase 4 — Learning
 
 1. **Run `/retrospective`** to capture patterns, fixes, and domain knowledge to `memory/`
-2. **Move plan** from `docs/plans/active/` to `docs/plans/completed/`
+2. **Remove temporary plan** from `scratch/`; update maintained documentation and the roadmap with lasting decisions or unfinished work.
 3. **Print summary:** what was built, files created/modified, tests added, any issues encountered
 
 ## Critical Rules

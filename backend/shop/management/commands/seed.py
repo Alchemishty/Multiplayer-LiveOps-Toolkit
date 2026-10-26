@@ -63,8 +63,8 @@ ACHIEVEMENTS = [
      "threshold_counter", "currency_spent", 500, "none", "gold"),
     ("spend-gold-5000", "Big Spender", "Spend 5000 gold total",
      "threshold_counter", "currency_spent", 5000, "none", "gold"),
-    ("spend-gems-100", "Gem Enthusiast", "Spend 100 gems total",
-     "threshold_counter", "currency_spent", 100, "none", "gems"),
+    ("spend-gems-100", "Gear Enthusiast", "Spend 100 gears total",
+     "threshold_counter", "currency_spent", 100, "none", "gears"),
     # Collection Completion
     ("all-headwear", "Hat Trick", "Own every headwear accessory",
      "collection_completion", "purchase", 0, "headwear", ""),

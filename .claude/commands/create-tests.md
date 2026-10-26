@@ -5,9 +5,9 @@ Generate EditMode and PlayMode tests for existing code.
 ## Usage
 
 Specify which files to generate tests for. Since there are no git operations, provide explicit file paths or patterns:
-- `/create-tests Assets/Scripts/Data/ShopCatalog.cs`
-- `/create-tests Assets/Scripts/Player/PlayerAccessory.cs`
-- `/create-tests Assets/Scripts/API/` (all files in directory)
+- `/create-tests Unity/Assets/Scripts/Data/ShopCatalog.cs`
+- `/create-tests Unity/Assets/Scripts/Player/PlayerAccessory.cs`
+- `/create-tests Unity/Assets/Scripts/API/` (all files in directory)
 
 ## Prerequisites
 
@@ -23,12 +23,12 @@ For each target file, classify into test tier:
 
 | File Layer | Test Tier | Location |
 |---|---|---|
-| Data (enums, DTOs, structs) | EditMode | `Assets/Tests/EditMode/` |
-| Pure C# logic (validators, helpers) | EditMode | `Assets/Tests/EditMode/` |
-| ScriptableObject logic | EditMode | `Assets/Tests/EditMode/` |
-| MonoBehaviour (no Netcode) | PlayMode | `Assets/Tests/PlayMode/` |
-| NetworkBehaviour | PlayMode | `Assets/Tests/PlayMode/` |
-| UI interaction | PlayMode | `Assets/Tests/PlayMode/` |
+| Data (enums, DTOs, structs) | EditMode | `Unity/Assets/Tests/EditMode/` |
+| Pure C# logic (validators, helpers) | EditMode | `Unity/Assets/Tests/EditMode/` |
+| ScriptableObject logic | EditMode | `Unity/Assets/Tests/EditMode/` |
+| MonoBehaviour (no Netcode) | PlayMode | `Unity/Assets/Tests/PlayMode/` |
+| NetworkBehaviour | PlayMode | `Unity/Assets/Tests/PlayMode/` |
+| UI interaction | PlayMode | `Unity/Assets/Tests/PlayMode/` |
 
 ### Step 2 — Read Source Files
 
@@ -41,8 +41,8 @@ For each target file:
 ### Step 3 — Generate Tests
 
 For each target file, create a corresponding test file:
-- `ShopCatalog.cs` → `Assets/Tests/EditMode/ShopCatalogTests.cs`
-- `PlayerAccessory.cs` → `Assets/Tests/PlayMode/PlayerAccessoryTests.cs`
+- `ShopCatalog.cs` → `Unity/Assets/Tests/EditMode/ShopCatalogTests.cs`
+- `PlayerAccessory.cs` → `Unity/Assets/Tests/PlayMode/PlayerAccessoryTests.cs`
 
 **Test structure:**
 ```csharp
@@ -108,7 +108,7 @@ Summarize:
 ## Ensure Test Directories Exist
 
 Before writing test files, create directories if needed:
-- `Assets/Tests/EditMode/`
-- `Assets/Tests/PlayMode/`
+- `Unity/Assets/Tests/EditMode/`
+- `Unity/Assets/Tests/PlayMode/`
 
 Also ensure assembly definitions exist for test assemblies if the project uses asmdef files.

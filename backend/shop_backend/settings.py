@@ -21,7 +21,6 @@ INSTALLED_APPS = [
     "django.contrib.staticfiles",
     "rest_framework",
     "rest_framework_simplejwt",
-    "django_extensions",
     "shop",
 ]
 
@@ -32,6 +31,8 @@ REST_FRAMEWORK = {
     "DEFAULT_THROTTLE_RATES": {
         "economy_mutation": "30/min",
         "claim": "5/min",
+        "password_login": "10/min",
+        "identity_proof": "20/min",
     },
     "DEFAULT_PAGINATION_CLASS": "rest_framework.pagination.PageNumberPagination",
     "PAGE_SIZE": 50,
@@ -41,6 +42,7 @@ SIMPLE_JWT = {
     "ACCESS_TOKEN_LIFETIME": timedelta(minutes=15),
     "REFRESH_TOKEN_LIFETIME": timedelta(days=1),
     "USER_ID_FIELD": "id",
+    "TOKEN_REFRESH_SERIALIZER": "shop.serializers.PlayerTokenRefreshSerializer",
 }
 
 MIDDLEWARE = [
@@ -123,4 +125,23 @@ LOGGING = {
             "propagate": True,
         },
     },
+}
+
+
+# Separate asymmetric proof key: never substitute the account JWT signing secret.
+LIVEOPS_IDENTITY_PROOF = {
+    "private_key_file": os.environ.get("LIVEOPS_PROOF_PRIVATE_KEY_FILE", ""),
+    "key_id": os.environ.get("LIVEOPS_PROOF_KEY_ID", ""),
+    "issuer": os.environ.get("LIVEOPS_PROOF_ISSUER", ""),
+    "game_id": os.environ.get("LIVEOPS_GAME_ID", ""),
+    "environment": os.environ.get("LIVEOPS_ENVIRONMENT", ""),
+    "content_version": os.environ.get("LIVEOPS_CONTENT_VERSION", ""),
+    "lifetime_seconds": os.environ.get("LIVEOPS_PROOF_LIFETIME_SECONDS", "60"),
+}
+
+# Sample cosmetic slots. Conflicts must be symmetric and reference configured slots.
+LIVEOPS_EQUIPMENT_SLOTS = {
+    'headwear': ['hair'], 'hair': ['headwear'], 'facewear': [],
+    'mainhand': [], 'offhand': [], 'back': [], 'head': [],
+    'torso': [], 'arms': [], 'legs': [], 'feet': [],
 }

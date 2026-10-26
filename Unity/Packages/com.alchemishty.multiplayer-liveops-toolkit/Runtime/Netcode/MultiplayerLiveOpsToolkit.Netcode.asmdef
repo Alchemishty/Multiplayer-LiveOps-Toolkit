@@ -1,0 +1,9 @@
+{
+    "name": "MultiplayerLiveOpsToolkit.Netcode",
+    "references": [
+        "MultiplayerLiveOpsToolkit.Identity",
+        "MultiplayerLiveOpsToolkit.Equipment",
+        "Unity.Netcode.Runtime",
+        "Unity.Collections"
+    ]
+}

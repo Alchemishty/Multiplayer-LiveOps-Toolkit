@@ -1,0 +1,36 @@
+{
+    "name": "EditModeTests",
+    "rootNamespace": "",
+    "references": [
+        "UnityEngine.TestRunner",
+        "UnityEditor.TestRunner",
+        "MultiplayerLiveOpsToolkit",
+        "MultiplayerLiveOpsToolkit.Core",
+        "MultiplayerLiveOpsToolkit.Identity",
+        "MultiplayerLiveOpsToolkit.Wallet",
+        "MultiplayerLiveOpsToolkit.Inventory",
+        "MultiplayerLiveOpsToolkit.Shop",
+        "MultiplayerLiveOpsToolkit.Equipment",
+        "MultiplayerLiveOpsToolkit.Achievements",
+        "MultiplayerLiveOpsToolkit.DailyRewards",
+        "MultiplayerLiveOpsToolkit.UnityIntegration",
+        "MultiplayerLiveOpsToolkit.Backends.Django",
+        "MultiplayerLiveOpsToolkit.Netcode"
+    ],
+    "includePlatforms": [
+        "Editor"
+    ],
+    "excludePlatforms": [],
+    "allowUnsafeCode": false,
+    "overrideReferences": true,
+    "precompiledReferences": [
+        "nunit.framework.dll",
+        "Newtonsoft.Json.dll"
+    ],
+    "autoReferenced": false,
+    "defineConstraints": [
+        "UNITY_INCLUDE_TESTS"
+    ],
+    "versionDefines": [],
+    "noEngineReferences": false
+}

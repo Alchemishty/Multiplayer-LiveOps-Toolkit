@@ -1,0 +1,1 @@
+{"name":"MultiplayerLiveOpsToolkit.Shop","rootNamespace":"MultiplayerLiveOpsToolkit.Shop","references":["MultiplayerLiveOpsToolkit.Core","MultiplayerLiveOpsToolkit.Wallet","MultiplayerLiveOpsToolkit.Inventory"],"autoReferenced":true,"noEngineReferences":true}

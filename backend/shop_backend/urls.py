@@ -1,42 +1,33 @@
-from django.conf import settings
+from shop.views import daily_reward_views
 from django.urls import path
 from django.contrib import admin
-from shop.views import auth_views, wallet_views, shop_views, rewards_views
+from shop.views import auth_views, wallet_views, identity_proof_views, inventory_views, shop_module_views, equipment_views, achievement_views
 from rest_framework_simplejwt.views import TokenRefreshView
 
 urlpatterns = [
+    path("api/daily-rewards/state/", daily_reward_views.state),
+    path("api/daily-rewards/claim/", daily_reward_views.claim),
     path("admin/", admin.site.urls),
 
     # Auth
-    path("api/auth/", auth_views.authenticate_user),
+    path("api/auth/password/", auth_views.password_authenticate),
+    path("api/auth/identity-proof/", identity_proof_views.issue_identity_proof),
     path("api/auth/refresh/", TokenRefreshView.as_view()),
 
     # Wallet
     path("api/wallet/", wallet_views.get_wallet),
-    path("api/shop/convert-currency/", wallet_views.convert_currency),
-    path("api/get-session-reward/", wallet_views.session_reward),
+    path("api/wallet/convert/", wallet_views.convert_currency),
 
-    # Shop & accessories
-    path("api/shop/accessories/", shop_views.list_accessories),
-    path("api/shop/purchase/", shop_views.purchase_accessory),
-    path("api/shop/sets/", shop_views.list_sets),
-    path("api/shop/purchase-set/", shop_views.purchase_set),
+    path("api/shop/catalog/", shop_module_views.catalog),
+    path("api/shop/purchase-offer/", shop_module_views.purchase),
 
+    path("api/equipment/loadout/", equipment_views.loadout),
+    path("api/equipment/proof/", equipment_views.proof),
     # Inventory & equipment
-    path("api/accessories/", shop_views.user_accessories),
-    path("api/accessories/update-equipped/", shop_views.update_equipped_accessories),
-    path("api/accessories/get-equipped/", shop_views.get_equipped_accessories),
+    path("api/inventory/", inventory_views.get_inventory),
 
-    # Daily login
-    path("api/daily-login/calendar/", rewards_views.get_daily_login_calendar),
-    path("api/daily-login/claim/", rewards_views.claim_daily_login),
-    path("api/achievements/", rewards_views.get_achievements),
-
-    # Achievements (data-driven system)
-    path("api/achievements/definitions/", rewards_views.list_achievement_definitions),
-    path("api/achievements/progress/", rewards_views.get_achievement_progress),
-    path("api/achievements/unlock/", rewards_views.report_achievement_unlock),
-    path("api/achievements/progress/update/", rewards_views.report_achievement_progress),
+    path("api/achievements/state/", achievement_views.state),
+    path("api/achievements/claim/", achievement_views.claim),
 ]
 
 urlpatterns.append(path("api/auth/dev/", auth_views.dev_authenticate))

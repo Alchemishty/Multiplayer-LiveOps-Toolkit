@@ -14,9 +14,9 @@
 | `AccessoryPool` | Per-avatar component implementing `IAccessoryVisualSync`. Pools accessory GameObjects and manages one active item per slot independently for each player. |
 | `SkinnedMeshAttacher` | Static utility that reparents a skinned-mesh accessory prefab onto an avatar's bone hierarchy. |
 | `ClientPlayerAvatars` | Singleton registry mapping Netcode `clientId` → avatar `GameObject`. Tracks local player's avatar. |
-| `TokenAPI` | JWT manager. Stores access/refresh tokens in `PlayerPrefs`. |
+| `DjangoPlayerSession` | Owns an in-memory JWT session with shared proactive renewal. |
 | `SendWithTokenRefresh` | Extension method on `UnityWebRequest`: attaches Bearer token, retries once on 401 after refresh. |
-| `DevAuthBootstrap` | Prompts for a username and authenticates with `/api/auth/dev/` after Play is clicked. |
+| `DevAuthBootstrap` | Presents username/password login through Identity/Core before multiplayer connection. |
 | `WalletEntry` | DTO: `{ currency: { name }, amount }` representing one currency balance. |
 | `AutoConnect` | Tries Netcode Client first; falls back to Host after timeout. |
 | `ClientNetworkTransform` | Client-authoritative `NetworkTransform`. Overrides `OnIsServerAuthoritative()` → `false` so the owning client's position changes propagate to all other clients. Required because the default `NetworkTransform` is server-authoritative — only the server can move the transform. |
@@ -27,13 +27,12 @@
 
 | State | Owner | Sync Method |
 |---|---|---|
-| Equipped accessories (visual) | Server (JSON structure check) | `NetworkVariable<AccessoryState>` — owner requests via ServerRpc, server checks JSON deserialization and writes; ownership is not checked in this RPC |
-| Equipped accessories (persistent) | Backend | REST `GET/POST /api/accessories/get-equipped/` and `/update-equipped/` |
-| Shop catalog (pricing, ownership) | Backend → `AccessoryRegistry` | REST `GET /api/shop/accessories/` and `/api/shop/sets/` merged into `ShopCatalog` at runtime |
+| Equipped cosmetics (public) | Server after signed equipment verification | `NetworkVariable<AccessoryState>` contains revision and equipped slot/ID pairs only |
+| Equipped accessories (persistent) | Backend | REST `GET/POST /api/equipment/loadout/` |
 | Wallet balances | Backend | REST `GET /api/wallet/`; displayed by `WalletDisplay` |
 | Master accessory catalog (prefabs) | Client (local asset) | `AccessorySO` ScriptableObject — never synced |
-| Player username/nameplate | Client (owner authority) | `PlayerNameplate.Username`, an owner-written `NetworkVariable<FixedString64Bytes>`; UTF-8 input truncated to 63 bytes |
-| JWT tokens | Client-local | `PlayerPrefs` via `TokenAPI` |
+| Public player ID/nameplate | Server after signed identity verification | Server-written `PlayerNameplate.PlayerId` / `Username`; unverified peers cannot observe sample players |
+| JWT tokens | Client-local | In memory via `DjangoPlayerSession`; never replicated |
 | Player avatar registry | Client-local | `ClientPlayerAvatars` singleton; populated by `PlayerAvatarSetup.OnNetworkSpawn` |
 | Player movement | Client (owner authority) | `SimplePlayerMovement` writes `transform.position`; `ClientNetworkTransform` syncs to all clients. Client-authoritative — the owner is trusted. |
 | Player animation | Client (owner authority) | `SimplePlayerMovement` sets Animator Speed param; `ClientNetworkAnimator` syncs to all clients. |
@@ -42,24 +41,19 @@
 
 | Endpoint | Method | Body / Params | Response Shape |
 |---|---|---|---|
-| `/api/auth/dev/` | POST | `{"username":"..."}` | `{"access","refresh","username"}` |
+| `/api/auth/password/` | POST | `{"username":"...","password":"..."}` | `{"access","refresh","username","player_id"}`; existing active Django user required |
+| `/api/auth/dev/` | POST | `{"username":"..."}` | `{"access","refresh","username","player_id"}` (DEBUG only) |
 | `/api/auth/refresh/` | POST | `{"refresh":"..."}` | `{"access","refresh"}` |
-| `/api/shop/accessories/` | GET | — | `{"accessories": {"headwear": [{"id","name","is_owned","costs":[{"currency","amount"}]}]}}` |
-| `/api/shop/sets/` | GET | — | `{"sets": {"category": [{"id","name","is_owned","accessory_ids","costs"}]}}` |
-| `/api/shop/purchase/` | POST | `{"accessory_id": int}` | 200 success / 400 `{"message":"reason"}` |
-| `/api/shop/convert-currency/` | POST | `currency_type=str&amount=int` | `{"gold_amount": int}` / 400 `{"message":"..."}` |
-| `/api/accessories/update-equipped/` | POST | `{"accessory_ids": [int]}` | 200 success |
-| `/api/accessories/get-equipped/` | GET | — | `{"accessory_ids": [int]}` |
-| `/api/wallet/` | GET | — | `[{"currency":{"name":"gold"},"amount":500},...]` |
-| `/api/shop/purchase-set/` | POST | `{"set_id": int}` | Success or error response handled by `ShopAPI.PurchaseSet` |
-| `/api/daily-login/calendar/` | GET | — | `{"year","month","today","days":[{"day","reward":{"currency","amount"},"is_claimed"}]}` |
-| `/api/daily-login/claim/` | POST | Empty body | `{"day","reward":{"currency","amount"},"message"}` |
-| `/api/achievements/definitions/` | GET | — | `{"achievements":[...]}` |
-| `/api/achievements/progress/` | GET | — | `{"progress":[...]}` |
-| `/api/achievements/unlock/` | POST | `{"achievement_id": str, "current_count": int}` | HTTP success confirms the unlock to the client |
-| `/api/achievements/progress/update/` | POST | `{"achievement_id": str, "current_count": int}` | HTTP success/error |
+| `/api/wallet/convert/` | POST | `{"offer_id": str, "amount": int}` | Confirmed wallet snapshot / typed `{"code": str}` rejection |
+| `/api/equipment/loadout/` | POST | `{"item_ids": [string], "expected_revision": int}` | Confirmed definitions/loadout, or typed rejection |
+| `/api/equipment/loadout/` | GET | — | Configured slots/items and revisioned canonical loadout |
+| `/api/equipment/proof/` | POST | `{"session_id": string, "challenge": string}` | Private signed equipment assertion |
+| `/api/shop/catalog/` | GET | — | `{offers, wallet, inventory}` confirmed shop/account snapshots |
+| `/api/shop/purchase-offer/` | POST | `{"offer_id": str}` | `{purchased_offer_id, offers, wallet, inventory}` / typed `{code}` rejection |
+| `/api/inventory/` | GET | — | `{"items":[{"item_id","display_name","category_id"}],"sets":[{"set_id","display_name","item_ids"}]}` |
+| `/api/wallet/` | GET | — | `{"balances":[{"currency_id":"gold","amount":500}],"offers":[...]}` |
 
-All authenticated endpoints use `SendWithTokenRefresh` (Bearer JWT, auto-retry on 401).
+Authenticated adapters use an explicitly supplied `IAuthenticatedSession` (Bearer JWT, bounded renewal and one replay on 401). Wallet conversions have no automatic transport retry.
 
 ## Networking Standards
 
@@ -71,9 +65,31 @@ This project uses **Unity Netcode for GameObjects**. All new and modified code m
 4. **Never unsubscribe in `OnDestroy`** — use `OnNetworkDespawn` (fires first for networked objects).
 5. **Validate deserialized payloads:** `AccessoryState.Json` can be null or empty — `PlayerAccessory.ApplyRemoteAccessoryState` guards with `if (string.IsNullOrEmpty(accessoryJson)) return;`. Apply this pattern to all `NetworkVariable` JSON payloads.
 6. **RPCs cannot be called before `OnNetworkSpawn`** — fails silently.
-7. **Check `IsOwner`/`IsServer` before writing `NetworkVariables`** — `PlayerAccessory.AccessoryJson` is `WritePermission.Server`; owner sends `RequestAccessoryUpdateServerRpc`, server checks JSON deserialization and writes; ownership is not checked in this RPC. All public mutation methods have `IsSpawned` guards.
+7. **Check `IsOwner`/`IsServer` before writing `NetworkVariables`** — `PlayerAccessory.AccessoryJson` is server-written only from the gate-approved EquipmentLoadout. There is no client equipment RPC. Publish only after spawn; keep ownership/conflict validation in the backend and module.
 8. **Client authority for movement and animation.** The default `NetworkTransform` and `NetworkAnimator` are server-authoritative — only the server/host can change the synced values. For client-driven systems like player movement, use `ClientNetworkTransform` and `ClientNetworkAnimator` which override `OnIsServerAuthoritative()` to return `false`. Without this, client movement and animations will not propagate to other players. The host appears to work because the host IS the server.
 9. **NetworkBehaviours must be on the prefab, not added at runtime.** A `NetworkBehaviour` added via `AddComponent` after `NetworkObject.Spawn` does not properly register with Netcode — `IsOwner`, `IsServer`, and RPCs may not work. `SimplePlayerMovement` is baked on the player prefab and uses `IsOwner` to gate input, not added conditionally at runtime.
-10. **Player prefab component list:** `NetworkObject`, `ClientNetworkTransform`, `ClientNetworkAnimator`, `SimplePlayerMovement`, `PlayerAvatarSetup`, `PlayerAccessory`, `AccessoryPool`, `Animator`, `CharacterController`, `PlayerNameplate`. All baked on the prefab. `SetupExampleScene.cs` is the source of truth.
+10. **Player prefab component list:** `NetworkObject`, `ClientNetworkTransform`, `ClientNetworkAnimator`, `SimplePlayerMovement`, `PlayerAvatarSetup`, `PlayerAccessory`, `AccessoryPool`, `Animator`, `CharacterController`, `PlayerNameplate`. All baked on the prefab. The saved scene and player prefab are the source of truth.
 
 API URLs use `ApiConfig.BASE_URL` (default `http://localhost:8000`, overridable via `SetBaseUrl`). Contracts above describe the Unity client; backend enforcement must be checked separately.
+
+## Identity assertion protocol v1
+
+An identity assertion is a short-lived backend-signed statement of public player identity, scoped to configured game/environment/content and a server-generated session/challenge. It is separate from account access/refresh tokens and does not prove cosmetic ownership. `IdentityChallenge` belongs to one peer connection; successful verification consumes it once. See [wire format and operational setup](../Documentation/multiplayer-identity-verification.md). The sample enforces peer verification, spawn gating and player visibility through `NetcodeIdentityGate` and `VerifiedPlayerSpawner`. Equipment uses a separate signed assertion for canonical slot/ID pairs and revision, verified after identity and before spawn/publication. See [Equipment protocol](../Documentation/multiplayer-identity-verification.md#equipment-protocol-v1-implemented).
+
+## Wallet mechanics
+
+Wallet is account-scoped and independent of avatars, Netcode and UI. The backend defines offers as an ID, source/target currency IDs and integral source/target units. The sample uses nonnegative signed-32-bit balances and exact exchange units; it validates the request and atomically debits/credits the authenticated account. No caller-supplied player ID is accepted.
+
+`IWalletBackend` supplies confirmed snapshots to `WalletModule`; `IWalletService` exposes immutable balances/offers, refresh, conversion and change notifications. One operation runs at a time. A lost conversion response leaves its outcome unknown: cached balances are invalidated and a refresh is required before another conversion. No transaction history, receipt lookup, revision protocol or durable retry queue is required. Django is a reference implementation; consuming games choose bookkeeping and economy policies.
+
+## Achievement authority
+
+`GET /api/achievements/state/` returns definitions, confirmed progress/completion, claim flags and required Wallet/Inventory snapshots. `POST /api/achievements/claim/` accepts exactly `{"achievement_id":"..."}` and returns the same state plus `claimed_achievement_id`. Unknown/inactive, locked, already claimed and no-reward achievements reject without granting. Client counts/player IDs are rejected; legacy count/unlock routes are removed.
+
+Sample conditions: successful individual/set purchase counts, actual currency charged by Shop, current owned cosmetic collections and recorded daily attendance. Existing progress is preserved; no historical spend is inferred from current prices. Completion does not itself grant rewards. Claims atomically set `UserAchievement.is_claimed` and grant configured currency/cosmetics once. No-reward completion has no claim action. Generic gameplay-event evidence and game-specific receipts/history are outside this slice.
+
+## Daily Rewards authority
+
+`GET /api/daily-rewards/state/` returns `calendar: {today_date, days: [{day, reward: {currency_id, amount} | null, is_claimed}]}`, `wallet` (or null for attendance-only calendars) and `claimed_date: null`. The backend UTC date selects the month; all days appear once in order. Null reward means attendance-only. No client date/clock controls eligibility.
+
+`POST /api/daily-rewards/claim/` accepts only `{"date":"YYYY-MM-DD"}` from the displayed snapshot. A success returns confirmed calendar/Wallet plus matching `claimed_date`. A different current backend date returns `day_changed`; duplicate attendance returns `already_claimed`. Both require a read refresh. Unknown outcomes require refresh before another claim; no automatic retry. Negative/overflowing rewards, malformed schedules or unexportable results roll back both attendance and grants. Existing attendance also supplies achievement login-condition progress.

@@ -1,0 +1,8 @@
+{
+    "name": "MultiplayerLiveOpsToolkit.DailyRewards",
+    "references": [
+        "MultiplayerLiveOpsToolkit.Core",
+        "MultiplayerLiveOpsToolkit.Wallet"
+    ],
+    "noEngineReferences": true
+}

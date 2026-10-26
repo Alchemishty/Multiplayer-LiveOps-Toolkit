@@ -1,80 +1,101 @@
 # Multiplayer LiveOps Toolkit
 
-Private development repository for a Unity multiplayer live-ops toolkit and its Django REST backend. It currently provides an integrated example of shop purchases, inventory and accessory sets, wallet/currency conversion, daily login rewards, achievements, avatar cosmetics, and player nameplates.
+Multiplayer LiveOps Toolkit gives Unity developers ready-to-use systems for player accounts, currencies, shops, cosmetic inventories, equipment, achievements and daily rewards.
 
-This repository preserves the current working Unity example and its reference backend.
+It is built for multiplayer games. Players can try on cosmetics locally, save their equipment through a backend, and share their approved appearance with other players. The package includes cosmetic rendering and multiplayer avatar setup. Movement, animation replication and camera controls are also provided as optional integrations.
 
-## Repository layout
+The goal is to reuse these systems across games: choose the modules you need, replace the art and UI, and build your game's additional features around them. A self-hosted Django backend is included as a working reference; you can connect another backend through the module interfaces.
 
-- `Assets/`, `Packages/`, `ProjectSettings/`: Unity project; open this repository root in Unity Hub.
-- `backend/`: Django server, migrations, tests, and seed command.
-- `docs/`: architecture, domain contracts, and testing.
-- `enforcement/`, `AGENTS.md`: development conventions and change requirements.
+## Features
 
-## Requirements
+| Module | What you can do |
+|---|---|
+| Identity | Sign players in, maintain their account session and verify their public identity in multiplayer |
+| Wallet | Keep backend-confirmed currency balances and convert between currencies at configured rates |
+| Shop | Offer individual cosmetics and complete sets, with backend-defined catalogs and multi-currency prices |
+| Inventory | Track owned cosmetics and fully owned sets independently of the shop |
+| Equipment | Equip and unequip items or sets, save loadouts, apply slot conflicts and preview looks locally |
+| Achievements | Track supported backend-observable progress and claim configured currency or cosmetic rewards |
+| Daily Rewards | Show monthly calendars, record attendance and claim rewards using the backend's date |
+| Multiplayer avatars | Spawn verified players and share their public identity and approved equipped cosmetics, including with late joiners |
 
-- Unity **2022.3.33f1** (see `ProjectSettings/ProjectVersion.txt`).
-- Python **3.11** for the backend, or Docker Compose.
-- Git and Git LFS. Binary assets use LFS; Unity YAML and `.meta` files stay in ordinary Git.
+### Visual customization
 
-## Clone
+The package supplies the rendering needed to show equipped cosmetics and shop previews:
 
-```sh
-git lfs install
-git clone https://github.com/Alchemishty/MultiplayerLiveOpsToolkit.git
-cd MultiplayerLiveOpsToolkit
-git lfs pull
+- Attach accessories to configured points on a character, or replace selected base meshes.
+- Replace skinned body parts for complete outfits using compatible rigs.
+- Hide the corresponding base meshes while replacements are equipped and restore them when removed.
+- Configure slots and conflicts, such as headwear excluding hair.
+- Preview an item or set without buying it, saving it or changing what other players see.
+- Replace the base character and add cosmetics or slots through visual catalogs, rig bindings and matching backend configuration.
+
+Skinned replacements need compatible authored meshes and bind poses. Slot conflicts are explicit rules; the toolkit does not detect intersecting geometry automatically.
+
+### Adapt it to your game
+
+Initialize only the modules your game uses. Their services are independent of the sample UI, so you can build your own screens and observe state changes through events. Authentication, backend adapters and cosmetic rendering can be replaced to fit your project.
+
+The supplied multiplayer integration uses Netcode for GameObjects and supports host/client and dedicated-server sessions. You can keep the included movement, animation replication and third-person camera, or use your own.
+
+## What's in this repository?
+
+| Part | What it contains |
+|---|---|
+| **Unity package** | Reusable modules, cosmetic rendering, multiplayer avatar integration, optional character controls and portable tests |
+| **Full Demo** | A complete playable scene with modular character art, animated avatars, cosmetics, catalogs and TextMeshPro UI |
+| **Django reference backend** | Working account authentication, economy, ownership, equipment, achievements, daily rewards and admin/content tools |
+
+The Full Demo shows the systems working together: sign in, join another player, browse categorized items and outfits, preview a look, buy and equip it, then see the approved change on the other instance. It also includes currency conversion, achievements, daily rewards and a development reset.
+
+The same demo is available in two places: directly under the repository's `Unity/Assets/` folder, and as the package's single optional **Full Demo** sample. Import the sample and open its scene. The backend runs separately.
+
+## How it works
+
+```mermaid
+flowchart LR
+    A[Player's game client] -->|Account requests| B[Django or your backend]
+    B -->|Confirmed account state and signed proofs| A
+    A -->|Identity and equipment proofs| C[Host or dedicated server]
+    C -->|Verified public identity and cosmetics| D[Other players]
 ```
 
-Access requires permission to the private repository. Commit asset changes together with their `.meta` files. The project uses Visible Meta Files and Force Text serialization. Unity caches, builds, local databases, credentials, and virtual environments are excluded.
+Each client talks directly to the backend for its own account. The backend decides prices, balances, ownership and rewards. The host or dedicated server verifies signed identity/equipment proofs before spawning players and sharing their approved appearance.
 
-## Run the backend
+Cosmetic previews stay on the local client. Wallet balances, full inventories, credentials and private account progress are not replicated to other players.
 
-```sh
-cd backend
-python3.11 -m venv .venv
-source .venv/bin/activate
-python -m pip install -r requirements.txt
-cp .env.example .env
-set -a
-source .env
-set +a
-python manage.py migrate
-python manage.py seed
-python manage.py runserver 127.0.0.1:8000
-```
+Account authority and gameplay authority are separate. The supplied movement is client-authoritative; this toolkit does not provide an authoritative combat or match simulation. See the [verification protocol](Documentation/multiplayer-identity-verification.md) for details.
 
-PowerShell activation is `.venv\Scripts\Activate.ps1`; set the variables from `.env.example` in that shell. Django reads process environment variables, so creating `.env` alone does not load it. Use the seed command for the current schema; the imported `initial_data.json` fixture is legacy data from an earlier schema.
+## Current support
 
-Alternatively, from the repository root:
+- **Unity:** 2022.3; developed and tested with 2022.3.33f1.
+- **Platforms:** desktop. Native build/execution checks currently cover macOS; Windows, Linux and Unity's dedicated-server build target remain unqualified.
+- **Inventory:** cosmetic ownership. General item stacks, consumables and equipment stats are outside the current implementation.
+- **Backend:** Django is a reference implementation. Games choose their own hosting, database operations and additional economy policies.
+- **Availability:** terminal authentication/renewal and handshake failures disconnect. Immediate detection of an idle backend outage remains an open gap.
 
-```sh
-cp backend/.env.example backend/.env
-docker compose up --build
-```
+This is a development preview; the support and limitations listed above describe its current scope.
 
-This starts the local development backend at `http://localhost:8000` and persists SQLite data in a Docker volume. Migrations are committed and applied, never generated at container startup. These examples use development configuration; deployment requires production secrets, authentication, host/TLS settings, and a database/operations review.
+## Get started
 
-## Run Unity
+The Unity project is in **`Unity/`**. Add that folder to Unity Hub; the repository root holds the backend, documentation and development tooling.
 
-1. Add the repository root in Unity Hub and open it with 2022.3.33f1. Allow packages and assets to import.
-2. Open `Assets/Scenes/ExampleScene.unity` and start the backend.
-3. Enter Play Mode, type a development username, and click Play.
-4. The first instance becomes a Netcode host after a connection timeout; additional instances connect to it. Run builds from Unity's Build Settings with ExampleScene enabled.
+**Try the complete repository demo:** follow [Run the demo](Documentation/getting-started.md) to set up the backend, create accounts, configure public verification trust and run two instances.
 
-The editor setup command `Tools/Setup Example Scene` regenerates the example scene and prefab wiring. See `Assets/Editor/SetupExampleScene.cs` before changing scene composition. API requests default to `http://localhost:8000`; `ApiConfig.SetBaseUrl` supports an override. The development login/reset endpoints require `DEBUG=True` and are unsuitable as production authentication.
+**Install in a fresh Unity project:** follow [Package integration](Documentation/package-integration.md) and the [Full Demo sample setup](Unity/Packages/com.alchemishty.multiplayer-liveops-toolkit/Samples~/FullDemo/README.md). The sample requires TextMeshPro, uGUI and TMP Essentials.
 
-## Verification
+**Build your own integration:** start with the [package guide](Unity/Packages/com.alchemishty.multiplayer-liveops-toolkit/Documentation~/index.md), [visual customization](Unity/Packages/com.alchemishty.multiplayer-liveops-toolkit/Documentation~/equipment-visuals.md) and [multiplayer avatar integration](Unity/Packages/com.alchemishty.multiplayer-liveops-toolkit/Documentation~/full-demo.md).
 
-```sh
-cd backend
-.venv/bin/python manage.py check
-.venv/bin/python manage.py makemigrations --check --dry-run
-.venv/bin/python manage.py test shop
-```
+## Development and next steps
 
-Unity: run `EditModeTests` and `PlayModeTests` in Test Runner, then inspect the console after returning to Edit Mode. The baseline has 198 EditMode tests, one nameplate-material PlayMode regression, and 65 backend tests. Test Framework is pinned to 1.3.9 to fix the earlier runner teardown exception. Backend checks run in GitHub Actions. Unity CI requires a separately configured Unity license workflow; it is not configured here.
+See the [roadmap](Documentation/roadmap.md) for Unity 6 support, inventory beyond cosmetics, admin/dashboard editing and current platform/availability gaps. The [architecture decisions](Documentation/architecture-decisions.md) explain the choices behind account authority, multiplayer verification and recovery.
 
-## Distribution
+Browse the [project documentation](Documentation/README.md) for all usage guides.
 
-This private development snapshot is not the Asset Store deliverable. No open-source license is granted by this repository. Third-party material retains its own terms; see [third-party notes](THIRD_PARTY_NOTICES.md). Package licensing and redistributable sample assets must be settled before publication.
+For contributors, [technical architecture](docs/architecture.md) and [testing](docs/testing.md) explain implementation and verification. [AGENTS.md](AGENTS.md), [conventions](docs/conventions.md) and [enforcement](enforcement/) record the project's development rules.
+
+The reusable package lives in `Unity/Packages/com.alchemishty.multiplayer-liveops-toolkit/`; the demo is under `Unity/Assets/`, and the backend is under `backend/`. Demo changes are synchronized to the package sample with `python3 tools/sync_full_demo.py`.
+
+## Distribution and credits
+
+Multiplayer LiveOps Toolkit is an open-source project distributed through GitHub. Third-party art and dependencies retain their own license terms; see [third-party notices](Unity/Assets/Models/CREDITS.md) for attribution and links.

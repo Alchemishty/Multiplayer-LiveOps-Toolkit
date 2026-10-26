@@ -2,16 +2,18 @@
 
 Unity multiplayer live-ops toolkit. Accessory system, shop, wallet, real-time avatar sync over Netcode for GameObjects.
 
+Unity project root: `Unity/`. Use it for Unity Hub/CLI; Unity asset paths remain relative to that folder.
+
 ## Quick Reference
 
 - **Config:** `harness.yaml` — all commands, thresholds, rules
+- **Project guides:** `Documentation/README.md` — reader-facing setup, integration and backend guides
 - **Agent guide:** `AGENTS.md` — read this first every session
 - **Architecture:** `docs/architecture.md` — layers, bootstrap ordering, singletons
 - **Conventions:** `docs/conventions.md` — the authority on coding standards
 - **Domain:** `docs/domain.md` — multiplayer domain, Netcode rules, API contracts
 - **Testing:** `docs/testing.md` — test strategy, patterns, coverage priorities
 - **Enforcement:** `enforcement/` — non-negotiable rules checked after writing code
-- **Memory:** `memory/` — cross-session learning, read at session start
 
 ## Non-Negotiable Rules
 
@@ -23,7 +25,7 @@ Unity multiplayer live-ops toolkit. Accessory system, shop, wallet, real-time av
 6. Commit/push/PR actions require a user request; no force-push or history rewriting without explicit authorization
 7. Read `docs/` before making changes — understand the project's architecture first
 8. Bug fixes are not refactoring opportunities — minimal changes only
-9. **Keep `SetupExampleScene.cs` in sync** — it is the source of truth for the scene. Any new singleton, panel, tab, accessory, or wired reference must be added to the script. Running `Tools/Setup Example Scene` rebuilds the scene from scratch — anything not in the script will be lost
+9. **Saved scene/prefabs are authoritative.** Generators have been removed. Update authored demo assets directly, then run `python3 tools/sync_full_demo.py` and verify with `--check` to synchronize the Full Demo sample.
 
 ## Commands
 
@@ -59,9 +61,6 @@ When reviewing code (or when `/code-review` is invoked), check the diff against 
 
 The Django REST backend lives at `backend/` in this repository. It is versioned alongside the Unity client in this repository. Run it with `.venv/bin/python manage.py runserver`. Seed data with `.venv/bin/python manage.py seed`. When adding new features that touch both client and server, update both codebases in the same session.
 
-## Setup
+## Documentation
 
-If `docs/` is empty, generate project-specific docs first:
-```
-./generate-docs.sh
-```
+Read the maintained agent/contributor guidance in `docs/` and the reader-facing guides in `Documentation/`. Update these documents directly alongside project changes. Unity lives under `Unity/`; use the Unity MCP tools or Unity Test Runner for compilation and tests. Harness bootstrap, automatic documentation generation and benchmark runner scripts are not part of this repository.

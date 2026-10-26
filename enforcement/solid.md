@@ -101,3 +101,7 @@ For each new or modified class:
 3. Does it mix UI + logic, or API + logic, or networking + business rules?
 4. Could the business logic be tested in EditMode if extracted?
 5. Do its references only point to same-layer or lower-layer code?
+
+## Concrete consumers (YAGNI)
+
+Do not design abstractions, wrappers or policies until a concrete implemented module needs them. A new type must identify its current consumer and the existing responsibility it replaces. Reuse an existing owner when it already fulfills the requirement. Future roadmap items alone do not justify new extension points, coordination frameworks or settings.

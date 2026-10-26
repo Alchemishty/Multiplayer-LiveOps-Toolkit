@@ -2,6 +2,8 @@
 
 Unity multiplayer live-ops toolkit: accessory system, shop, wallet, real-time avatar sync over Netcode for GameObjects, REST API backend.
 
+The Unity project root is `Unity/`; open that folder in Unity Hub and use it for Unity CLI `-projectPath`. Paths beginning `Assets/`, `Packages/` or `ProjectSettings/` in Unity API examples are relative to that folder. The backend and repository tooling stay at the repository root.
+
 ## Agent Rules
 
 1. **Never silently consume null.** If a value must be non-null for the mechanism to work, throw an `InvalidOperationException` or `ArgumentNullException` with a message identifying what's missing and where. `if (x == null) return;` is forbidden when x being null means the system is broken.
@@ -15,11 +17,23 @@ Unity multiplayer live-ops toolkit: accessory system, shop, wallet, real-time av
 9. **Git operations require user authorization.** Local review is allowed. Commit, branch, push, or open PRs when requested by the user; never force-push or rewrite history without explicit authorization.
 10. **When in doubt, throw an error** rather than degrade silently. Fail loud, fail early.
 11. **Bug fixes are not refactoring opportunities.** Fix the root cause with minimal changes. No new classes, file renames, or architectural restructuring during a bug fix. Enforcement violation fixes near the bug are the only exception.
-12. **`SetupExampleScene.cs` is the scene source of truth.** Running `Tools/Setup Example Scene` rebuilds the entire scene from scratch — all GameObjects, components, serialized field references, and UI hierarchy are created programmatically. Any feature that adds a new singleton, panel, tab, accessory, or wired reference **must** update the script. Never rely on manual inspector changes surviving a scene rebuild. If you add something to the scene, add it to the script in the same change.
+12. **Saved demo assets are the source of truth.** Edit `Assets/Scenes/ExampleScene.unity`, prefabs and catalogs directly. Scene generators have been removed. After changing demo scripts or assets, run `python3 tools/sync_full_demo.py` to update the importable Full Demo sample, then verify with `--check`. Preserve GUIDs and keep sample copies out of the repository's own Assets.
+
+13. **Design for concrete consumers.** Do not add abstractions, wrappers or policies until an implemented module needs them. Name the current consumer and the responsibility being replaced; reuse existing owners.
+
+14. **The Django backend is a sample.** Do not add game-specific transaction history, receipt systems or production economy infrastructure unless explicitly requested. Keep frontend contracts focused on mechanics; consuming games choose their backend bookkeeping and policies.
 
 ## Backend
 
 The Django REST backend is at `backend/` in this repository. Run backend commands from `backend/` and use `.venv/bin/python`. Seed: `manage.py seed`. Run: `manage.py runserver`. Test: `manage.py test shop`. Features that add API endpoints must update both the backend and Unity client.
+
+## SDK package and demo boundary
+
+Reusable runtime code lives in `Unity/Packages/com.alchemishty.multiplayer-liveops-toolkit/Runtime/`; portable tests live in that package's `Tests/`. `Assets/` contains the full game demo and its tests. Do not restore SDK source copies under Assets or introduce a runtime assembly dependency on the demo. Preserve `.meta` files when moving scripts. See [package integration](Documentation/package-integration.md) and run `python3 tools/test_package_layout.py` after package/dependency changes.
+
+## Documentation boundaries
+
+`Documentation/` contains reader-facing project/usage guides. `docs/` is reserved for agent/contributor architecture, conventions, testing, plans, specifications and review drafts. Keep package-local guides in `Unity/Packages/com.alchemishty.multiplayer-liveops-toolkit/Documentation~`. Update links when moving documents; do not duplicate a guide between these folders.
 
 ## Architecture
 
@@ -56,10 +70,6 @@ See [enforcement/](enforcement/) — non-negotiable rules checked after code is 
 ## Code Review
 
 Use `/code-review` after implementation to get a fresh-context review against all enforcement rules. Every rule in `enforcement/` is a hard gate — violations must be fixed.
-
-## Memory
-
-Cross-session agent learning in [memory/](memory/). Read at session start, write after completing features and review cycles. Knowledge compounds across sessions.
 
 ## Harness Config
 

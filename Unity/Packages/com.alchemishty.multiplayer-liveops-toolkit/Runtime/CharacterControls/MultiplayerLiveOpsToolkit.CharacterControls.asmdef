@@ -1,0 +1,8 @@
+{
+    "name": "MultiplayerLiveOpsToolkit.CharacterControls",
+    "references": [
+        "MultiplayerLiveOpsToolkit.Netcode.Avatars",
+        "Unity.Netcode.Runtime",
+        "Unity.Netcode.Components"
+    ]
+}

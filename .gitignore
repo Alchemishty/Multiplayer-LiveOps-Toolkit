@@ -1,12 +1,12 @@
 # Unity-generated state and player builds
-/[Ll]ibrary/
-/[Tt]emp/
-/[Oo]bj/
-/[Ll]ogs/
-/[Bb]uilds/
-/UserSettings/
-/MemoryCaptures/
-/Recordings/
+/Unity/[Ll]ibrary/
+/Unity/[Tt]emp/
+/Unity/[Oo]bj/
+/Unity/[Ll]ogs/
+/Unity/[Bb]uilds/
+/Unity/UserSettings/
+/Unity/MemoryCaptures/
+/Unity/Recordings/
 
 # IDE and OS output
 .vs/
@@ -19,12 +19,12 @@
 
 # Agent and test artifacts
 *.log
-/mono_crash.*.json
+/Unity/mono_crash.*.json
 /scratch/
-/Assets/InitTestScene*.unity
-/Assets/InitTestScene*.unity.meta
-/Assets/Screenshots/
-/Assets/Screenshots.meta
+/Unity/Assets/InitTestScene*.unity
+/Unity/Assets/InitTestScene*.unity.meta
+/Unity/Assets/Screenshots/
+/Unity/Assets/Screenshots.meta
 
 # Python backend state and secrets
 **/__pycache__/

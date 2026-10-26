@@ -7,3 +7,11 @@ class EconomyMutationThrottle(UserRateThrottle):
 
 class ClaimThrottle(UserRateThrottle):
     scope = "claim"
+
+
+class PasswordLoginThrottle(UserRateThrottle):
+    scope = "password_login"
+
+
+class IdentityProofThrottle(UserRateThrottle):
+    scope = "identity_proof"

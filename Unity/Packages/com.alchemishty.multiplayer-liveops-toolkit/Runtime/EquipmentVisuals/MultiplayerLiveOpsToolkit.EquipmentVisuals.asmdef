@@ -1,0 +1,6 @@
+{
+    "name": "MultiplayerLiveOpsToolkit.EquipmentVisuals",
+    "references": [
+        "MultiplayerLiveOpsToolkit.Equipment"
+    ]
+}

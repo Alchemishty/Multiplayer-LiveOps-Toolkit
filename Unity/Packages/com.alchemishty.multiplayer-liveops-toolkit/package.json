@@ -1,0 +1,20 @@
+{
+    "name": "com.alchemishty.multiplayer-liveops-toolkit",
+    "version": "0.1.0-preview.1",
+    "displayName": "Multiplayer LiveOps Toolkit",
+    "description": "Modular account mechanics with replaceable backends, a Django reference adapter and Netcode integration. Development preview.",
+    "unity": "2022.3",
+    "dependencies": {
+        "com.unity.netcode.gameobjects": "1.9.1",
+        "com.unity.nuget.newtonsoft-json": "3.2.1",
+        "com.unity.modules.unitywebrequest": "1.0.0",
+        "com.unity.modules.animation": "1.0.0"
+    },
+    "samples": [
+        {
+            "displayName": "Full Demo",
+            "description": "Complete playable multiplayer demo with character art, cosmetics and TMP UI. Requires TextMeshPro, uGUI, TMP Essentials and the reference backend.",
+            "path": "Samples~/FullDemo"
+        }
+    ]
+}

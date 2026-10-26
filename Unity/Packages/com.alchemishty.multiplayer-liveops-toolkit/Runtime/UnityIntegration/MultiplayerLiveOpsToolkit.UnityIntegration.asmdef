@@ -1,0 +1,7 @@
+{
+    "name": "MultiplayerLiveOpsToolkit.UnityIntegration",
+    "references": [
+        "MultiplayerLiveOpsToolkit.Core",
+        "MultiplayerLiveOpsToolkit.Identity"
+    ]
+}

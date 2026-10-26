@@ -1,0 +1,1 @@
+{"name":"MultiplayerLiveOpsToolkit.Achievements","rootNamespace":"MultiplayerLiveOpsToolkit.Achievements","references":["MultiplayerLiveOpsToolkit.Core","MultiplayerLiveOpsToolkit.Wallet","MultiplayerLiveOpsToolkit.Inventory"],"autoReferenced":true,"noEngineReferences":true}

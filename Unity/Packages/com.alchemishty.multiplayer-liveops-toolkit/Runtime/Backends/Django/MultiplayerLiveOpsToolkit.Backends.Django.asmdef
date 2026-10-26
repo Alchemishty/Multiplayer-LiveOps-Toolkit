@@ -1,0 +1,14 @@
+{
+    "name": "MultiplayerLiveOpsToolkit.Backends.Django",
+    "references": [
+        "MultiplayerLiveOpsToolkit.Core",
+        "MultiplayerLiveOpsToolkit.Identity",
+        "MultiplayerLiveOpsToolkit.Wallet",
+        "MultiplayerLiveOpsToolkit.Inventory",
+        "MultiplayerLiveOpsToolkit.Shop",
+        "MultiplayerLiveOpsToolkit.Equipment",
+        "MultiplayerLiveOpsToolkit.Achievements",
+        "MultiplayerLiveOpsToolkit.DailyRewards",
+        "MultiplayerLiveOpsToolkit.UnityIntegration"
+    ]
+}

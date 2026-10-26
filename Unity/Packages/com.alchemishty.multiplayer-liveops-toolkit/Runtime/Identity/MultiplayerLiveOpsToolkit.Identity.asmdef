@@ -1,0 +1,9 @@
+{
+    "name": "MultiplayerLiveOpsToolkit.Identity",
+    "rootNamespace": "MultiplayerLiveOpsToolkit.Identity",
+    "references": [
+        "MultiplayerLiveOpsToolkit.Core"
+    ],
+    "autoReferenced": true,
+    "noEngineReferences": true
+}

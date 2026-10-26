@@ -4,6 +4,7 @@ project:
   name: MultiplayerLiveOpsToolkit
   description: "Unity multiplayer live-ops toolkit with accessory system, shop, wallet, and real-time avatar sync"
   type: existing
+  unity_project: "Unity/"
 
 stack:
   language: csharp
@@ -14,7 +15,6 @@ stack:
   packages:
     - "com.unity.netcode.gameobjects@1.9.1"
     - "com.unity.textmeshpro"
-    - "com.unity.purchasing"
     - "Newtonsoft.Json"
 
 commands:
@@ -24,8 +24,10 @@ commands:
     step_1: "mcp: refresh_unity"
     step_2: "mcp: read_console — check for zero errors"
   test: "mcp: run_tests"
-  test_editmode: "mcp: run_tests with testMode=EditMode"
-  test_playmode: "mcp: run_tests with testMode=PlayMode"
+  test_editmode: "mcp: run_tests mode=EditMode assembly_names=[EditModeTests, MultiplayerLiveOpsToolkit.Tests.EditMode]"
+  test_playmode: "mcp: run_tests mode=PlayMode assembly_names=[PlayModeTests, MultiplayerLiveOpsToolkit.Tests.PlayMode]"
+  test_package: "python3 tools/test_package_layout.py"
+  test_consumer: "python3 tools/verify_package_consumer.py"
   refresh: "mcp: refresh_unity"
 
 verification:
@@ -47,9 +49,6 @@ docs:
   conventions: "docs/conventions.md"
   domain: "docs/domain.md"
   testing: "docs/testing.md"
-  plans_active: "docs/plans/active/"
-  plans_completed: "docs/plans/completed/"
-  decisions: "docs/decisions/"
   memory: "memory/"
   scratch: "scratch/"
 
@@ -75,10 +74,10 @@ gardening:
   enabled: true
   trigger: manual
   skip_directories:
-    - "Library/"
-    - "Temp/"
-    - "Logs/"
-    - "obj/"
+    - "Unity/Library/"
+    - "Unity/Temp/"
+    - "Unity/Logs/"
+    - "Unity/obj/"
     - "TextMesh Pro/"
   skip_extensions:
     - ".meta"

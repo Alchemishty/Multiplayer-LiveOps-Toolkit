@@ -25,6 +25,7 @@ class PlayerProfile(models.Model):
         on_delete=models.CASCADE,
         related_name="player_profile",
     )
+    equipment_revision = models.PositiveBigIntegerField(default=0)
     platform_id = models.CharField(max_length=255, unique=True, blank=True, default="")
 
     def __str__(self):
@@ -191,6 +192,7 @@ class UserAchievement(models.Model):
     achievement = models.ForeignKey(Achievement, on_delete=models.CASCADE)
     current_count = models.IntegerField(default=0)
     is_unlocked = models.BooleanField(default=False)
+    is_claimed = models.BooleanField(default=False)
     unlocked_at = models.DateTimeField(null=True, blank=True)
 
     class Meta:

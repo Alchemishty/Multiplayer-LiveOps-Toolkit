@@ -1,0 +1,33 @@
+{
+    "name": "MultiplayerLiveOpsToolkit",
+    "rootNamespace": "",
+    "references": [
+        "Unity.Netcode.Runtime",
+        "Unity.Netcode.Components",
+        "Unity.TextMeshPro",
+        "Unity.Collections",
+        "MultiplayerLiveOpsToolkit.Core",
+        "MultiplayerLiveOpsToolkit.Identity",
+        "MultiplayerLiveOpsToolkit.Wallet",
+        "MultiplayerLiveOpsToolkit.Inventory",
+        "MultiplayerLiveOpsToolkit.Shop",
+        "MultiplayerLiveOpsToolkit.Equipment",
+        "MultiplayerLiveOpsToolkit.Achievements",
+        "MultiplayerLiveOpsToolkit.DailyRewards",
+        "MultiplayerLiveOpsToolkit.UnityIntegration",
+        "MultiplayerLiveOpsToolkit.Backends.Django",
+        "MultiplayerLiveOpsToolkit.Netcode",
+        "MultiplayerLiveOpsToolkit.EquipmentVisuals",
+        "MultiplayerLiveOpsToolkit.Netcode.Avatars",
+        "MultiplayerLiveOpsToolkit.CharacterControls"
+    ],
+    "includePlatforms": [],
+    "excludePlatforms": [],
+    "allowUnsafeCode": false,
+    "overrideReferences": false,
+    "precompiledReferences": [],
+    "autoReferenced": true,
+    "defineConstraints": [],
+    "versionDefines": [],
+    "noEngineReferences": false
+}

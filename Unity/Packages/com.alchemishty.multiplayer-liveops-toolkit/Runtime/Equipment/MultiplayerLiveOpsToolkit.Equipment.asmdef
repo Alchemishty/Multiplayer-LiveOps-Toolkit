@@ -1,0 +1,1 @@
+{"name":"MultiplayerLiveOpsToolkit.Equipment","rootNamespace":"MultiplayerLiveOpsToolkit.Equipment","references":["MultiplayerLiveOpsToolkit.Core","MultiplayerLiveOpsToolkit.Inventory","MultiplayerLiveOpsToolkit.Identity"],"autoReferenced":true,"noEngineReferences":true}

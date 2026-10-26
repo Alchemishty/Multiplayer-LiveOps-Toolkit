@@ -1,0 +1,13 @@
+{
+    "name": "MultiplayerLiveOpsToolkit.Netcode.Avatars",
+    "references": [
+        "MultiplayerLiveOpsToolkit.Netcode",
+        "MultiplayerLiveOpsToolkit.Identity",
+        "MultiplayerLiveOpsToolkit.Equipment",
+        "MultiplayerLiveOpsToolkit.EquipmentVisuals",
+        "Unity.Netcode.Runtime",
+        "Unity.Netcode.Components",
+        "Unity.Collections",
+        "Unity.Networking.Transport"
+    ]
+}

@@ -11,7 +11,7 @@ Always skip:
 - `.unity` scene files (binary, don't scan for code patterns)
 - `.asset` files (serialized Unity assets)
 
-Only scan: `.cs` files in `Assets/Scripts/` and `Assets/Tests/`
+Only scan: `.cs` files in `Unity/Assets/Scripts/` and `Unity/Assets/Tests/`
 
 ## Checks
 
@@ -26,8 +26,8 @@ Scan all `.md` files in `docs/` and `enforcement/`:
 
 ### 2. Test Coverage Gaps
 
-For each `.cs` file in `Assets/Scripts/` (excluding `Example/`):
-- Check if a corresponding test file exists in `Assets/Tests/EditMode/` or `Assets/Tests/PlayMode/`
+For each `.cs` file in `Unity/Assets/Scripts/` (excluding `Example/`):
+- Check if a corresponding test file exists in `Unity/Assets/Tests/EditMode/` or `Unity/Assets/Tests/PlayMode/`
 - Flag files without any test coverage
 
 **Report only.** Do not auto-generate tests — that's `/create-tests`.

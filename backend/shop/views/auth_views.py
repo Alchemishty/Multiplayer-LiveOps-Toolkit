@@ -1,43 +1,19 @@
-import os
-import requests
 from django.conf import settings as django_settings
+from django.contrib.auth import authenticate
 from django.contrib.auth.models import User
-from django.db import transaction, IntegrityError
-from rest_framework.decorators import api_view, permission_classes
+from django.db import transaction
+from rest_framework.decorators import api_view, permission_classes, authentication_classes, throttle_classes
 from rest_framework.permissions import AllowAny, IsAuthenticated
 from rest_framework.response import Response
 from rest_framework import status
 from rest_framework_simplejwt.tokens import RefreshToken
 
+from shop.throttles import PasswordLoginThrottle
+
 from shop.models import (
     PlayerProfile, Currency, Wallet, UserAccessory, UserAchievement,
     DailyAttendance,
 )
-
-
-def verify_platform_identity(platform_user_id, nonce):
-    """Verify user identity with the platform provider (e.g., Oculus, Steam)."""
-    app_id = os.environ.get("PLATFORM_APP_ID", "")
-    app_secret = os.environ.get("PLATFORM_APP_SECRET", "")
-
-    if not app_id or not app_secret:
-        return False
-
-    verification_url = os.environ.get(
-        "PLATFORM_VERIFY_URL",
-        "https://graph.oculus.com/user_nonce_validate",
-    )
-    access_token = f"OC|{app_id}|{app_secret}"
-
-    response = requests.post(
-        verification_url,
-        data={
-            "nonce": nonce,
-            "user_id": platform_user_id,
-            "access_token": access_token,
-        },
-    )
-    return response.status_code == 200
 
 
 def _create_player_profile(user, platform_id=""):
@@ -49,62 +25,39 @@ def _create_player_profile(user, platform_id=""):
 
 
 @api_view(["POST"])
+@authentication_classes([])
 @permission_classes([AllowAny])
-def authenticate_user(request):
-    """
-    Authenticate via platform nonce verification. Creates user + player profile
-    + wallets on first login. Returns JWT access and refresh tokens.
-
-    POST /api/auth/
-    Body: {"platform_user_id": "abc123", "nonce": "xyz", "username": "player1"}
-    Success 200: {"access": "<jwt>", "refresh": "<jwt>", "username": "player1", "platform_id": "abc123"}
-    Error 401: {"message": "Platform verification failed"}
-
-    curl -X POST http://localhost:8000/api/auth/ \\
-      -H "Content-Type: application/json" \\
-      -d '{"platform_user_id": "abc123", "nonce": "xyz", "username": "player1"}'
-    """
-    platform_user_id = request.data.get("platform_user_id")
-    nonce = request.data.get("nonce")
+@throttle_classes([PasswordLoginThrottle])
+def password_authenticate(request):
+    """Authenticate a provisioned Django user; never create users from login input."""
+    if not isinstance(request.data, dict):
+        return Response({"code": "invalid_credentials", "message": "Username and password are required."}, status=400)
     username = request.data.get("username")
+    password = request.data.get("password")
+    if (not isinstance(username, str) or not username.strip() or len(username) > 150
+            or not isinstance(password, str) or not password or len(password) > 4096):
+        return Response({"code": "invalid_credentials", "message": "Username and password are required."}, status=400)
 
-    if not platform_user_id or not nonce:
-        return Response(
-            {"message": "Missing platform_user_id or nonce"},
-            status=status.HTTP_400_BAD_REQUEST,
-        )
+    user = authenticate(request=request, username=username, password=password)
+    if user is None or not user.is_active:
+        return Response({"code": "authentication_rejected", "message": "Invalid username or password."}, status=401)
 
-    if not verify_platform_identity(platform_user_id, nonce):
-        return Response(
-            {"message": "Platform verification failed"},
-            status=status.HTTP_401_UNAUTHORIZED,
-        )
-
-    try:
-        profile = PlayerProfile.objects.select_related("user").get(
-            platform_id=platform_user_id
-        )
-        user = profile.user
-    except PlayerProfile.DoesNotExist:
+    # Serialize first-login provisioning for an existing account. An account
+    # from another identity provider retains its profile and economy state.
+    with transaction.atomic():
+        user = User.objects.select_for_update().get(pk=user.pk)
         try:
-            user = User.objects.create_user(username=username)
-            profile = _create_player_profile(user, platform_id=platform_user_id)
-        except IntegrityError:
-            profile = PlayerProfile.objects.select_related("user").get(
-                platform_id=platform_user_id
-            )
-            user = profile.user
+            profile = PlayerProfile.objects.get(user=user)
+        except PlayerProfile.DoesNotExist:
+            profile = _create_player_profile(user, platform_id=f"django_{user.pk}")
 
     refresh = RefreshToken.for_user(user)
-
-    return Response(
-        {
-            "refresh": str(refresh),
-            "access": str(refresh.access_token),
-            "username": user.username,
-            "platform_id": profile.platform_id,
-        }
-    )
+    return Response({
+        "access": str(refresh.access_token),
+        "refresh": str(refresh),
+        "username": user.username,
+        "player_id": str(profile.pk),
+    })
 
 
 @api_view(["POST"])
@@ -116,7 +69,7 @@ def dev_authenticate(request):
 
     POST /api/auth/dev/
     Body: {"username": "testplayer1"}
-    Success 200: {"access": "<jwt>", "refresh": "<jwt>", "username": "testplayer1"}
+    Success 200: {"access": "<jwt>", "refresh": "<jwt>", "username": "testplayer1", "player_id": "1"}
     Error 404: returned when DEBUG=False
 
     curl -X POST http://localhost:8000/api/auth/dev/ \\
@@ -138,6 +91,13 @@ def dev_authenticate(request):
         defaults={"password": ""},
     )
 
+    if not created and (
+        not user.is_active
+        or user.password != ""
+        or not PlayerProfile.objects.filter(user=user, platform_id=f"dev_{username}").exists()
+    ):
+        return Response({"message": "Development authentication is restricted to development accounts."}, status=401)
+
     if created:
         profile = PlayerProfile.objects.create(
             user=user, platform_id=f"dev_{username}"
@@ -156,6 +116,7 @@ def dev_authenticate(request):
             "refresh": str(refresh),
             "access": str(refresh.access_token),
             "username": user.username,
+            "player_id": str(user.player_profile.pk),
         }
     )
 
@@ -182,6 +143,11 @@ def reset_account(request):
     starting_balances = {"gold": 5000, "snowflakes": 500, "gears": 100}
 
     with transaction.atomic():
+        profile = PlayerProfile.objects.select_for_update().get(pk=profile.pk)
+        if profile.equipment_revision >= 9223372036854775806:
+            return Response({"code": "equipment_configuration"}, status=409)
+        profile.equipment_revision += 1
+        profile.save(update_fields=["equipment_revision"])
         UserAccessory.objects.filter(player=profile).delete()
         UserAchievement.objects.filter(player=profile).delete()
         DailyAttendance.objects.filter(player=profile).delete()
