@@ -6,8 +6,8 @@ The complete playable multiplayer demo: Django username/password login, wallet/c
 
 1. Use a Built-in Render Pipeline project. Install TextMeshPro **3.0.6** and uGUI **1.0.0**.
 2. Import **Window > TextMeshPro > Import TMP Essential Resources**.
-3. Import **Full Demo** from Package Manager > Multiplayer LiveOps Toolkit > Samples.
-4. Open **Scenes/ExampleScene.unity** inside the imported Full Demo folder. No generation step is needed. Add this scene to Build Settings when making a player.
+3. For UPM, import **Full Demo** from Package Manager > Multiplayer LiveOps Toolkit > Samples. For the classic `.unitypackage`, Full Demo is already included under `Assets/MultiplayerLiveOpsToolkit/FullDemo/`.
+4. Open **Scenes/ExampleScene.unity** inside the imported Full Demo folder. Add this scene to Build Settings when making a player.
 5. Run the reference Django backend from the toolkit repository's `backend/` folder. Migrate/seed the reference content and create accounts through its admin/management commands. See repository `Documentation/backend-operations.md`. Default URL: `http://localhost:8000`; use the sample's `ApiConfig.SetBaseUrl` to override it.
 6. Configure backend proof signing and public verification trust as described in repository `Documentation/multiplayer-identity-verification.md`. Put public trust at `Assets/StreamingAssets/LiveOpsIdentityTrust.json`, or set `LIVEOPS_IDENTITY_TRUST_FILE` before starting Unity/player. Never copy the backend's private signing key into Unity.
 7. Press Play and sign in. The first instance tries client then falls back to hosting; a second instance, signed in with a different account, joins it. A server role uses `-liveops-server` with public trust and no local account login.

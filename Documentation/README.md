@@ -5,6 +5,7 @@ These guides explain what the toolkit provides and how to use it. Start with the
 | Guide | What it covers |
 |---|---|
 | [Run the demo](getting-started.md) | Repository setup, backend/accounts, trust configuration and two-instance play |
+| [Classic .unitypackage](unitypackage.md) | Release download, dependencies, import and building the distribution |
 | [Package integration](package-integration.md) | Fresh-project installation, Full Demo import, module composition and custom integrations |
 | [Architecture decisions](architecture-decisions.md) | Chosen designs, alternatives, reasons and tradeoffs |
 | [Roadmap](roadmap.md) | Remaining gaps and planned expansion |

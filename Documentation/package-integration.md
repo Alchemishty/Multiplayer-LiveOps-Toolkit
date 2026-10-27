@@ -20,6 +20,8 @@ The toolkit is now authored as one local UPM package at `Unity/Packages/com.alch
 
 Script/folder metadata moved with sources to preserve GUID bindings. Runtime assemblies never reference the demo assembly. Unity/Django/Netcode integration types now use `MultiplayerLiveOpsToolkit.UnityIntegration`, `.Backends.Django` and `.Netcode`; mechanic namespaces stay unchanged. There are no duplicated SDK source copies in Unity/Assets.
 
+For a classic asset import instead, use the [`.unitypackage` release and guide](unitypackage.md). Choose one installation format per project.
+
 ## Install locally
 
 Copy the package directory to your private package location, or add it from Package Manager > + > Add package from disk and select its package.json. A manifest reference uses `"com.alchemishty.multiplayer-liveops-toolkit": "file:/absolute/path/to/package"`. Keep local paths out of a shared consuming game's manifest unless all contributors use that layout; a private Git UPM URL is an option after the repository changes are committed/pushed. This work does not publish or push anything.

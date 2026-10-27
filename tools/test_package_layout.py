@@ -5,6 +5,7 @@ import tempfile
 import re
 import verify_package_consumer
 import sync_full_demo
+import build_unitypackage
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -13,6 +14,28 @@ PACKAGE = UNITY_PROJECT / 'Packages/com.alchemishty.multiplayer-liveops-toolkit'
 
 
 class PackageLayoutTests(unittest.TestCase):
+    def test_unitypackage_documentation_links_use_classic_layout(self):
+        source = PACKAGE / 'Documentation~/full-demo.md'
+        content = build_unitypackage.export_content(Path('Documentation/full-demo.md'), source)
+        self.assertIn(b'(../FullDemo/README.md)', content)
+        self.assertNotIn(b'(../Samples~/FullDemo/README.md)', content)
+
+    def test_unitypackage_contains_runtime_demo_and_not_project_state(self):
+        files = build_unitypackage.export_sources()
+        self.assertEqual(files[Path('Runtime/Identity/IdentityModule.cs')], PACKAGE / 'Runtime/Identity/IdentityModule.cs')
+        self.assertEqual(files[Path('FullDemo/Scenes/ExampleScene.unity')], PACKAGE / 'Samples~/FullDemo/Scenes/ExampleScene.unity')
+        self.assertIn(Path('LICENSE.md'), files)
+        self.assertIn(Path('FullDemo/Models/CREDITS.md'), files)
+        self.assertIn(Path('Documentation/equipment-visuals.md'), files)
+        for destination, source in files.items():
+            self.assertNotIn('Tests', destination.parts)
+            self.assertNotIn('Library', destination.parts)
+            self.assertNotIn('Editor', destination.parts)
+            self.assertNotEqual(destination.name, 'package.json')
+            self.assertNotIn(source.suffix, {'.pem', '.key', '.sqlite3'})
+            if source.suffix in {'.cs', '.asmdef', '.prefab', '.unity'}:
+                self.assertEqual(files[Path(str(destination) + '.meta')], Path(str(source) + '.meta'))
+
     def test_unity_project_is_contained_in_unity_directory(self):
         project = ROOT / 'Unity'
         for folder in ['Assets', 'Packages', 'ProjectSettings']:

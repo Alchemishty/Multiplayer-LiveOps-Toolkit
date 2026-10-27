@@ -1,6 +1,6 @@
 # Multiplayer avatar and game starter integration
 
-The package supplies reusable account modules, cosmetic rendering and verified multiplayer avatar integration. Movement, animation replication and camera controls are optional. Import **Full Demo** for the complete saved scene, character/cosmetics and UI, or compose the runtime directly with your own presentation. See [sample setup](../Samples~/FullDemo/README.md). No generator or minimal sample is shipped.
+The package supplies reusable account modules, cosmetic rendering and verified multiplayer avatar integration. Movement, animation replication and camera controls are optional. Import **Full Demo** for the complete saved scene, character/cosmetics and UI, or compose the runtime directly with your own presentation. See [sample setup](../Samples~/FullDemo/README.md).
 
 ## Runtime building blocks
 

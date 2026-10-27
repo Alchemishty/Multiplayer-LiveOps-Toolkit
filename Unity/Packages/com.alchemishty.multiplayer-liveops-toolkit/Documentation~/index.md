@@ -70,4 +70,4 @@ Additional platform and security qualification remains pending. Unity 6 and non-
 
 ## Complete multiplayer demo
 
-[Avatar and demo integration](full-demo.md) covers the packaged avatar registry/spawner, public identity/equipment, optional character controls and account composition. Import Full Demo and open its saved ExampleScene for the working scene/art/UI. See [setup](../Samples~/FullDemo/README.md). No scene generation is required.
+[Avatar and demo integration](full-demo.md) covers the packaged avatar registry/spawner, public identity/equipment, optional character controls and account composition. Import Full Demo and open its saved ExampleScene for the working scene/art/UI. See [setup](../Samples~/FullDemo/README.md).
