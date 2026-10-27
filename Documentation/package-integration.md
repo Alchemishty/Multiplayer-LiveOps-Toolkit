@@ -1,6 +1,6 @@
 # Package integration
 
-The toolkit is now authored as one local UPM package at `Unity/Packages/com.alchemishty.multiplayer-liveops-toolkit`, version `0.1.0-preview.1`, for Unity 2022.3. The existing game under Unity/Assets consumes that package; the backend stays at `backend/`. This is a development preview of the open-source toolkit. The owner has confirmed permission to distribute the demo art; see the third-party notices.
+The toolkit is now authored as one local UPM package at `Unity/Packages/com.alchemishty.multiplayer-liveops-toolkit`, version `0.1.0`, for Unity 2022.3. The existing game under Unity/Assets consumes that package; the backend stays at `backend/`. The Full Demo includes its art credits and license links.
 
 ## Boundaries
 

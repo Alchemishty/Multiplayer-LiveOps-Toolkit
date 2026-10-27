@@ -74,7 +74,7 @@ Account authority and gameplay authority are separate. The supplied movement is 
 - **Backend:** Django is a reference implementation. Games choose their own hosting, database operations and additional economy policies.
 - **Availability:** terminal authentication/renewal and handshake failures disconnect. Immediate detection of an idle backend outage remains an open gap.
 
-This is a development preview; the support and limitations listed above describe its current scope.
+The support and limitations listed above describe the scope of v0.1.0.
 
 ## Get started
 

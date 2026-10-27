@@ -1,6 +1,6 @@
 {
     "name": "com.alchemishty.multiplayer-liveops-toolkit",
-    "version": "0.1.0-preview.1",
+    "version": "0.1.0",
     "displayName": "Multiplayer LiveOps Toolkit",
     "description": "Modular account mechanics with replaceable backends, a Django reference adapter and Netcode integration. Development preview.",
     "unity": "2022.3",

@@ -1,6 +1,6 @@
 # Changelog
 
-## 0.1.0-preview.1
+## 0.1.0
 
 - Extract existing engine-free mechanics into one UPM package, preserving source metadata.
 - Separate UnityIntegration, Backends.Django and Netcode assemblies and public namespaces.

@@ -6,7 +6,7 @@ Runtime does not depend on a demo scene, UI, avatar, prefabs, fonts, matchmaking
 
 See [integration and contracts](Documentation~/index.md). The optional **Full Demo** sample includes the working scene, modular character, cosmetics, catalogs and UI. It requires TMP 3.0.6, uGUI 1.0.0 and TMP Essentials; those are sample dependencies, not runtime requirements. Open its saved ExampleScene after import. The Django server stays in the source repository.
 
-Version `0.1.0-preview.1` is a development preview. Demo art is confined to the optional sample; see [third-party notices](Samples~/FullDemo/Models/CREDITS.md). TMP Essentials/fonts are imported separately from Unity.
+Demo art is confined to the optional sample; see [third-party notices](Samples~/FullDemo/Models/CREDITS.md). TMP Essentials/fonts are imported separately from Unity.
 
 [Equipment visuals](Documentation~/equipment-visuals.md) provides configurable mesh/skinned cosmetics, avatar bindings, pooling and local preview/public equipment presentation. Supply your own character/cosmetic assets or use the Full Demo sample.
 
