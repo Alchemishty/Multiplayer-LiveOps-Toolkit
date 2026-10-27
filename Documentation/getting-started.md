@@ -14,8 +14,8 @@ To try the repository demo, follow the steps below. To use a fresh Unity project
 
 ```sh
 git lfs install
-git clone https://github.com/Alchemishty/MultiplayerLiveOpsToolkit.git
-cd MultiplayerLiveOpsToolkit
+git clone https://github.com/Alchemishty/Multiplayer-LiveOps-Toolkit.git
+cd Multiplayer-LiveOps-Toolkit
 git lfs pull
 ```
 

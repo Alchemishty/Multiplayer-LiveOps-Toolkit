@@ -12,7 +12,7 @@ The complete playable multiplayer demo: Django username/password login, wallet/c
 6. Configure backend proof signing and public verification trust as described in repository `Documentation/multiplayer-identity-verification.md`. Put public trust at `Assets/StreamingAssets/LiveOpsIdentityTrust.json`, or set `LIVEOPS_IDENTITY_TRUST_FILE` before starting Unity/player. Never copy the backend's private signing key into Unity.
 7. Press Play and sign in. The first instance tries client then falls back to hosting; a second instance, signed in with a different account, joins it. A server role uses `-liveops-server` with public trust and no local account login.
 
-The backend is a separately hosted sample, not a process installed or started by the Unity package. Source repository: https://github.com/Alchemishty/MultiplayerLiveOpsToolkit.
+The backend is a separately hosted sample, not a process installed or started by the Unity package. Source repository: https://github.com/Alchemishty/Multiplayer-LiveOps-Toolkit.
 
 ## Customize
 

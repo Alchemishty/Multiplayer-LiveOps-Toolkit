@@ -1,6 +1,6 @@
 # Import the .unitypackage
 
-Download the `.unitypackage` from [GitHub Releases](https://github.com/Alchemishty/MultiplayerLiveOpsToolkit/releases).
+Download the `.unitypackage` from [GitHub Releases](https://github.com/Alchemishty/Multiplayer-LiveOps-Toolkit/releases).
 
 The classic asset package includes the toolkit runtime and Full Demo, with their documentation, license and art credits. It imports into `Assets/MultiplayerLiveOpsToolkit/`.
 
@@ -24,7 +24,7 @@ Choose one installation format: the UPM package or this `.unitypackage`. They co
 1. Choose **Assets > Import Package > Custom Package** and select the `.unitypackage`.
 2. Import its contents and allow compilation to finish.
 3. Open `Assets/MultiplayerLiveOpsToolkit/FullDemo/Scenes/ExampleScene.unity`.
-4. Set up the separately hosted Django reference backend, accounts and public verification trust using the repository's [demo setup](https://github.com/Alchemishty/MultiplayerLiveOpsToolkit/blob/main/Documentation/getting-started.md). Default backend URL: `http://localhost:8000`.
+4. Set up the separately hosted Django reference backend, accounts and public verification trust using the repository's [demo setup](https://github.com/Alchemishty/Multiplayer-LiveOps-Toolkit/blob/main/Documentation/getting-started.md). Default backend URL: `http://localhost:8000`.
 5. Press Play and sign in. Run a second instance with another account to test multiplayer.
 
 The backend and private signing keys are not included in the asset package. Art/character replacement is described in `Documentation/equipment-visuals.md` inside the imported folder.

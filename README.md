@@ -82,7 +82,7 @@ The Unity project is in **`Unity/`**. Add that folder to Unity Hub; the reposito
 
 **Try the complete repository demo:** follow [Run the demo](Documentation/getting-started.md) to set up the backend, create accounts, configure public verification trust and run two instances.
 
-**Install in a fresh Unity project:** choose the [`.unitypackage` download](https://github.com/Alchemishty/MultiplayerLiveOpsToolkit/releases) with its [import guide](Documentation/unitypackage.md), or use [Package Manager integration](Documentation/package-integration.md). Both formats include Full Demo and require the documented Unity dependencies/TMP Essentials.
+**Install in a fresh Unity project:** choose the [`.unitypackage` download](https://github.com/Alchemishty/Multiplayer-LiveOps-Toolkit/releases) with its [import guide](Documentation/unitypackage.md), or use [Package Manager integration](Documentation/package-integration.md). Both formats include Full Demo and require the documented Unity dependencies/TMP Essentials.
 
 **Build your own integration:** start with the [package guide](Unity/Packages/com.alchemishty.multiplayer-liveops-toolkit/Documentation~/index.md), [visual customization](Unity/Packages/com.alchemishty.multiplayer-liveops-toolkit/Documentation~/equipment-visuals.md) and [multiplayer avatar integration](Unity/Packages/com.alchemishty.multiplayer-liveops-toolkit/Documentation~/full-demo.md).
 
