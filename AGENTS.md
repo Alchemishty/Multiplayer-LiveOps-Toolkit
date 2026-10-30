@@ -69,19 +69,8 @@ See [enforcement/](enforcement/) — non-negotiable rules checked after code is 
 
 ## Code Review
 
-Use `/code-review` after implementation to get a fresh-context review against all enforcement rules. Every rule in `enforcement/` is a hard gate — violations must be fixed.
+Review changes after implementation against all enforcement rules. Every rule in `enforcement/` is a hard gate — violations must be fixed.
 
 ## Harness Config
 
 All commands, thresholds, and rules: [harness.yaml](harness.yaml)
-
-## Skills
-
-| Command | Purpose |
-|---|---|
-| `/implement-feature` | Orchestrator: plan → TDD → verify → cleanup → retrospective |
-| `/create-tests` | Generate EditMode/PlayMode tests for existing code |
-| `/deslop` | Code cleanup: comments, naming, dead code, simplification |
-| `/garden` | Entropy scan: docs freshness, test gaps, unused code, memory freshness |
-| `/fix-bug` | Systematic debugging: reproduce → root cause → test → fix → verify |
-| `/retrospective` | Post-implementation learning capture to memory/ |

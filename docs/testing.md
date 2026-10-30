@@ -3,7 +3,7 @@
 ## Test Infrastructure
 
 **Framework:** NUnit via Unity Test Framework 1.3.9. Tests use `[TestFixture]` and `[Test]` attributes.
-**Location:** `Assets/Tests/EditMode/` and `Assets/Tests/PlayMode/`. Test assemblies reference the sample runtime and the selected engine-free module assemblies.
+**Location:** portable SDK tests live in `Unity/Packages/com.alchemishty.multiplayer-liveops-toolkit/Tests/`; demo tests live in `Unity/Assets/Tests/EditMode/` and `Unity/Assets/Tests/PlayMode/`. Run both package and demo assemblies for each mode.
 
 ## Existing coverage
 
@@ -17,9 +17,9 @@ Mechanics live in engine-free assemblies and have deterministic EditMode tests. 
 
 Every code change — bug fix, feature, or refactor — must include tests.
 
-**EditMode tests** go in `Assets/Tests/EditMode/`. Test pure C# logic only — no `MonoBehaviour`, no `GameObject`, no `ScriptableObject.CreateInstance`. Use AAA pattern. Name tests `MethodUnderTest_Condition_ExpectedResult`.
+**EditMode tests** go in the package Tests/EditMode folder for portable SDK behavior, or Unity/Assets/Tests/EditMode for demo behavior. Test pure C# logic only — no `MonoBehaviour`, no `GameObject`, no `ScriptableObject.CreateInstance`. Use AAA pattern. Name tests `MethodUnderTest_Condition_ExpectedResult`.
 
-**PlayMode tests** go in `Assets/Tests/PlayMode/`. Use `[UnityTest]` with `IEnumerator` for anything requiring frames. Clean up spawned GameObjects in `[TearDown]`.
+**PlayMode tests** go in the corresponding package or demo Tests/PlayMode folder. Use `[UnityTest]` with `IEnumerator` for anything requiring frames. Clean up spawned GameObjects in `[TearDown]`.
 
 **Extraction rule:** If business logic lives inside a MonoBehaviour/ScriptableObject and can't be EditMode-tested, extract it into a pure C# class. Completed extractions:
 
@@ -29,13 +29,23 @@ Every code change — bug fix, feature, or refactor — must include tests.
 
 **Coverage priorities:** final consumer/platform qualification. Equipment no longer accepts arbitrary loadout ServerRpc input.
 
-**What NOT to test:** Unity serialization of primitives, `UnityWebRequest` internals, Netcode transport, third-party JSON library correctness, editor-only `SetupExampleScene`.
+**What NOT to test:** Unity serialization of primitives, `UnityWebRequest` internals, Netcode transport, third-party JSON library correctness.
 
-Latest cleanup verification (2026-10-23): all 198 EditMode tests and the nameplate material PlayMode regression passed. Use Unity MCP `run_tests` for execution; refresh Unity and inspect the console after code changes as specified in `harness.yaml`.
+## Running current checks
+
+Run both `EditModeTests` and `MultiplayerLiveOpsToolkit.Tests.EditMode`, and both `PlayModeTests` and `MultiplayerLiveOpsToolkit.Tests.PlayMode`. Refresh Unity and inspect the console after returning to Edit Mode. Commands and tool names are recorded in [harness.yaml](../harness.yaml); Unity MCP availability depends on the agent environment.
+
+From the repository root, run `python3 tools/test_package_layout.py` and `python3 tools/sync_full_demo.py --check`. Backend checks run from backend/ using `.venv/bin/python`: `manage.py check`, `manage.py makemigrations --check --dry-run` and `manage.py test shop`. Fresh package/native qualification uses tools/verify_package_consumer.py and tools/verify_netcode_consumer.py when installation or integration changes require it.
+
+Test counts below describe recorded runs, not a new verification of the current checkout. The last recorded full root Unity run is 267 EditMode / 146 PlayMode after the Unity directory relocation; backend mechanics last recorded 103 Django tests. Current support limits are maintained in the [README](../README.md#current-support).
 
 Unity Test Framework can leave `Assets/InitTestScene*.unity` after interrupted runs. These generated scenes are ignored and can be deleted with their `.meta` files once no tests are running. Keep screenshots outside `Assets/` to avoid importing diagnostic images as game assets.
 
-## PlayMode runner cleanup compatibility
+## Historical verification records
+
+The entries below preserve evidence from successive implementation stages. References to generators, retired samples, temporary paths and older test counts describe those stages; they are not current setup instructions.
+
+### PlayMode runner cleanup compatibility
 
 Test Framework 1.1.33 reproduced a `NullReferenceException` in `PlaymodeLauncher.BackgroundWatcher` after the nameplate test passed. Its runtime controller called `Cleanup()` immediately after the run-finished event, clearing `m_Runner` before the editor exit callback read `m_Runner.LoadedTest`. The project pins 1.3.9, whose runtime controller leaves cleanup to the exit lifecycle. Do not patch `Library/PackageCache` or suppress this exception in game code.
 

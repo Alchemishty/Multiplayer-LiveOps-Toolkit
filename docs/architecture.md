@@ -2,61 +2,43 @@
 
 This document describes the current implementation. Public integration behavior and current boundaries are described in [package integration](../Documentation/package-integration.md); Core, Identity, Wallet, cosmetic Inventory, Shop, Equipment, Achievements and Daily Rewards are implemented in the private UPM preview. The existing full demo consumes the package; current support and limitations are summarized in the [README](../README.md#current-support).
 
-## Layer Model
+## Assembly and directory boundaries
 
-```
-Saved demo scene/prefabs                — authored composition over package runtime
-Tests  (EquipmentModuleTests, ShopCatalogTests, ...) — references runtime assemblies
-  ↑ nothing depends on these
-──────────────────────────────────────────────────────────────
-Example (UI, bootstrap, visuals)        → Player, Networking, Registry, API, Data
-Player  (NetworkBehaviours, sync)       → Networking, Identity, Registry, API, Data
-Networking (identity handshake)        → Identity, Netcode
-Registry (AccessoryRegistry)            → API, ScriptableObjects, Data
-API     (DjangoShopBackend, DjangoPlayerSession, DjangoWalletBackend) → Identity, Wallet, Core, Data
-ScriptableObjects (AccessorySO)         → Data
-Data    (DTOs, enums, pure C#)          → (no internal deps)
-```
+The reusable SDK lives in `Unity/Packages/com.alchemishty.multiplayer-liveops-toolkit/Runtime/`. The demo lives in `Unity/Assets/`; Django and repository tools stay at the repository root.
 
-Dependency direction is top-down. Legacy gameplay uses global C# types in `MultiplayerLiveOpsToolkit`. The new `MultiplayerLiveOpsToolkit.Core` assembly uses the matching `.Core` namespace and disables Unity engine references. The `MultiplayerLiveOpsToolkit.Identity` assembly is also engine-independent. It references Core and uses the existing Newtonsoft.Json library for strict identity-proof parsing; it has no Unity or legacy-project dependencies. Legacy layer boundaries remain conventions checked by type references and directory paths. See `enforcement/layer-imports.md`.
+| Area | Responsibility and dependencies |
+|---|---|
+| Core | Engine-free dependency resolution, initialization, rollback and shutdown |
+| Identity, Wallet, Inventory | Engine-free account contracts/state; depend on Core |
+| Shop, Equipment, Achievements, DailyRewards | Engine-free mechanics with explicit account dependencies; see their sections below |
+| UnityIntegration | PlayerContext, IAuthenticatedSession and ApiResponse; no Django dependency |
+| Backends.Django | Explicit-session HTTP adapters, TokenSession and DjangoPlayerModules composition |
+| Netcode | Identity/equipment proof gate; no demo, UI or player-prefab dependency |
+| EquipmentVisuals | CosmeticRenderer, IEquipmentRenderer and EquipmentVisualPresenter; no backend/Netcode/UI dependency |
+| Netcode.Avatars | VerifiedPlayerSpawner, AvatarRegistry, NetworkPlayerIdentity and PlayerAccessory |
+| CharacterControls | Optional owner-authoritative movement/animation and registry-bound camera |
+| Demo | Authored scene/art/catalogs, login, UI, nameplates and sample command owners |
 
-## Key Types
+The eight Core/mechanic assemblies have no Unity engine references. SDK assemblies cannot reference the demo assembly or TMP/uGUI. Demo types still include global C# types; inspect assembly and type references as well as using directives. See [layer rules](../enforcement/layer-imports.md).
 
-| Layer | Type | Role |
-|---|---|---|
-| Data | `AccessoryType` | Enum of equip slots (Headwear, MainHand, etc.) |
-| Data | `AccessoryState` | INetworkSerializable JSON wrapper for equipped-slot map |
-| Data | `ShopCatalog` | Runtime merged catalog: backend pricing + local prefabs |
-| Data | `ShopApiDTOs` | `AccessoriesResponse`, `AccessorySetResponse`, `AccessoryCost`, etc. |
-| API | `DjangoPlayerSession` | Instance-owned in-memory JWT session, shared renewal and explicit authenticated requests |
-| Shop | `ShopModule` | Independent catalogs and coordinated backend-confirmed purchases |
-| API | `DjangoShopBackend` | Explicit-session catalog/purchase transport |
-| Equipment | `EquipmentModule` | Independent canonical loadouts, configured conflicts and local preview |
-| API | `DjangoEquipmentBackend` | Explicit-session canonical loadout transport |
-| Wallet | `WalletModule` | Independent confirmed balances and backend-defined conversions |
-| API | `DjangoWalletBackend` | Injected-session reference Wallet transport |
-| ScriptableObjects | `AccessorySO` | Master catalog asset with O(1) lookups by ID/prefab |
-| Registry | `AccessoryRegistry` | Singleton bridging `AccessorySO` + `ShopCatalog`; loads on network connect |
-| Player | `PlayerAccessory` | NetworkBehaviour: syncs equipped accessories via `NetworkVariable<AccessoryState>` |
-| Player | `ClientPlayerAvatars` | Tracks all spawned avatars by client ID; exposes local avatar |
-| Player | `IAccessoryVisualSync` | Interface decoupling visual attachment from network sync |
-| Player | `ClientNetworkTransform` | Client-authoritative NetworkTransform — owner's position syncs to all clients |
-| Player | `ClientNetworkAnimator` | Client-authoritative NetworkAnimator — owner's animation params sync to all clients |
-| Example | `AccessoryPool` | Implements `IAccessoryVisualSync`; pools/bone-routes accessory instances |
-| Identity | `IdentityModule` | Establishes a backend-confirmed player identity through provider/backend contracts |
-| API | `DjangoIdentityBackend` | Exchanges Django password/development credentials for a session |
-| Example | `DevAuthBootstrap` | Presents login UI through Core/Identity initialization |
-| Example | `AutoConnect` | Tries Netcode Client, falls back to Host |
-| Example | `ShopPanel`, `InventoryPanel`, `SetsPanel` | Browse, purchase, preview, and equip items or sets |
-| Example | `AccessoryEquipService` | Coordinates local item/set previews and committed equipment |
-| Example | `ShopUIFactory`, `PurchaseConfirmationPrompt` | Shared UI construction and purchase confirmation |
-| Achievements | `AchievementsModule` | Backend-confirmed completion and explicit reward claims |
-| API | `DjangoAchievementBackend` | Explicit-session achievement reads/claims |
-| Example | `AchievementSampleController` | Durable claim/refresh owner independent of panel visibility |
-| DailyRewards | `DailyRewardsModule` | Backend-date calendar and atomic attendance/currency claims |
-| API | `DjangoDailyRewardBackend` | Explicit-session Daily Rewards transport |
-| Example | `DailyRewardsSampleController` | Durable calendar command owner and confirmed attendance notifications |
-| Player | `PlayerNameplate` | Server-verified public identity, host styling and distance fade |
+## Key integration types
+
+| Type | Role |
+|---|---|
+| DjangoPlayerModules | Composes explicitly selected account modules and adapters under PlayerContext |
+| PlayerContext | Owns one player's Identity/Core runtime and authenticated session lifetime |
+| DjangoPlayerSession | In-memory JWT session, shared renewal and authenticated dispatch |
+| AccessoryRegistry | Demo bridge from confirmed Shop/Inventory snapshots to local AccessorySO/ShopCatalog visual read models; no backend requests |
+| NetcodeIdentityGate | Owns public trust, peer challenges, identity/equipment approval and approved revisions |
+| VerifiedPlayerSpawner | Installs approved identity/loadout before spawning |
+| AvatarRegistry | Session-local avatar lookup and replacement notifications |
+| ClientPlayerAvatars | Demo presentation locator over AvatarRegistry |
+| NetworkPlayerIdentity | Server-approved public identity replication without TMP |
+| PlayerAccessory | Server-written verified equipment replication and presenter integration |
+| CosmeticRenderer | Per-avatar accessory pooling, attachment/skinned replacement and base-mesh restoration |
+| EquipmentVisualPresenter | Chooses verified public/canonical state with local-only preview overrides |
+| DevAuthBootstrap, AutoConnect | Demo login/UI bindings and account/trust/connection composition |
+| ShopSampleController, AccessoryEquipService, AchievementSampleController, DailyRewardsSampleController | Durable demo command owners independent of panel visibility |
 
 ## Bootstrap Ordering
 
@@ -72,9 +54,9 @@ Dependency direction is top-down. Legacy gameplay uses global C# types in `Multi
 
 These are dependency relationships, not a guaranteed execution order across components. Achievements initializes through Core after its explicit Identity/economy dependencies; it does not wait for Netcode. The login panel hides after the local avatar is registered.
 
-## Singleton Policy
+## Contexts and sample locators
 
-| Singleton | Lifetime | Access | Auto-creates? |
+| Owner/locator | Lifetime | Access | Auto-creates? |
 |---|---|---|---|
 | `DjangoPlayerSession` | Owning player context/GameObject | Explicit sample composition | No |
 | `AccessoryRegistry.Instance` | DontDestroyOnLoad | Scene-placed | No |
@@ -84,7 +66,7 @@ These are dependency relationships, not a guaranteed execution order across comp
 | `WalletDisplay.Instance` | Scene | Scene-placed | No |
 | `TabManager.Instance` | Scene | Scene-placed | No |
 
-`AccessoryPool` is a component on each player prefab, with independent instance and active-slot dictionaries. It has no singleton. `PlayerAccessory` resolves it through `GetComponent<IAccessoryVisualSync>()`. API auto-creation is an existing supported pattern; required scene dependencies should fail explicitly when missing.
+DjangoPlayerSession is instance-owned, not a singleton. AvatarRegistry belongs to its NetworkManager session. CosmeticRenderer owns independent pools on each avatar; PlayerAccessory resolves IEquipmentRenderer locally. Adapters require an injected authenticated session and never create one implicitly.
 
 ---
 
@@ -117,7 +99,7 @@ Equipment and Achievements use explicit-session commands without automatic mutat
 - `ILiveOpsModule` declares a stable `Id`, required module IDs, an initialization coroutine, and synchronous local `Shutdown` cleanup.
 - `ModuleDependencyResolver` validates the explicitly supplied selection and produces deterministic dependency order. Missing dependencies, cycles, duplicates and invalid metadata throw before initialization side effects. Dependencies are never implicitly selected.
 - `LiveOpsRuntime` initializes that plan, reports lifecycle failures, rolls back partially started modules and performs idempotent reverse-order shutdown.
-- `LiveOpsError` carries the lifecycle code, module context, diagnostic and original exception (including rollback exceptions). Backend/business error categories will be introduced alongside their actual consumers.
+- `LiveOpsError` carries the lifecycle code, module context, diagnostic and original exception (including rollback exceptions). Each mechanic exposes its own typed backend/business errors.
 
 ```csharp
 var runtime = new MultiplayerLiveOpsToolkit.Core.LiveOpsRuntime(selectedModules);
@@ -132,11 +114,11 @@ An initialization hook returns a non-null IEnumerator. Exhaustion means successf
 
 Module shutdown releases local resources synchronously and must not wait for backend responses. Cleanup continues after an independent module throws. Explicit shutdown reports collected cleanup exceptions through AggregateException after reaching Stopped; initialization failures retain those exceptions in the error cause. Terminal callbacks run after state/resources are finalized. Consumer callback exceptions propagate to the caller without changing an already established Ready/Stopped outcome or invoking the opposite callback. The single operation completion callback is not a multicast event subscription.
 
-Drive this API on the owning Unity thread. The future operation runner must explicitly invoke Shutdown when its owner ends; stopping a Unity coroutine or destroying a sample view is not an ownership policy. Core has no hidden polling, thread scheduler, global instance, or scene lookup.
+Drive this API on the owning Unity thread. The context or operation owner must explicitly invoke Shutdown when its lifetime ends; stopping a Unity coroutine or destroying a sample view is not an ownership policy. Core has no hidden polling, thread scheduler, global instance, or scene lookup.
 
 Core is now used by the sample's Identity initialization below. Explicit player ownership and the existing server verification owner are implemented below. Module settings assets, idle health deadlines and a broader lifecycle framework are deferred until a concrete module requires them. Authentication/handshake terminal disconnection is implemented.
 
-## Identity: initial sample integration
+## Identity and sample integration
 
 `Unity/Packages/com.alchemishty.multiplayer-liveops-toolkit/Runtime/Identity/` defines `IdentityModule`, `IIdentityProvider`, `IIdentityBackend`, `IdentityCredential`, and `PlayerIdentity` in a separate engine-independent assembly. The module obtains a credential from the supplied provider, exchanges it through the supplied backend, then exposes `CurrentPlayer` only after successful authentication. Identity contains no HTTP, UI, token storage, scene lookup, or global instance.
 
@@ -150,11 +132,11 @@ The explicit `DevelopmentIdentityProvider` remains Editor/Development Build only
 
 Both responses carry `player_id`, the existing profile primary key serialized as a string, stable for the account within its backend database. It is not a signed multiplayer identity proof. The legacy platform nonce endpoint is unchanged. Signed peer assertions additionally bind the configured game/environment/content, as described below.
 
-The Django adapter validates the complete response before publishing tokens, uses a bounded 15-second request timeout, and avoids raw response text in errors. It requires HTTPS except on loopback endpoints, rejects URL-embedded credentials/query/fragment, and disables redirects. `ITokenStore.SetTokens` requires the validated renewal endpoint alongside the token pair, binding the session to the authenticating adapter rather than later global configuration. It connects to the existing `DjangoPlayerSession`; legacy wallet/shop/etc. requests continue to use that token manager. The session keeps credentials in memory; legacy PlayerPrefs token/name removal belongs only to the demo bootstrap. Clearing tokens also clears the stored display name. Session/adapters live in the package Backends.Django assembly and context contracts live in UnityIntegration.
+The Django adapter validates the complete response before publishing tokens, uses a bounded 15-second request timeout, and avoids raw response text in errors. It requires HTTPS except on loopback endpoints, rejects URL-embedded credentials/query/fragment, and disables redirects. `ITokenStore.SetTokens` requires the validated renewal endpoint alongside the token pair, binding the session to the authenticating adapter rather than later global configuration. It connects to the existing `DjangoPlayerSession`; selected mechanic adapters share that explicitly supplied session. The session keeps credentials in memory; legacy PlayerPrefs token/name removal belongs only to the demo bootstrap. Clearing tokens also clears the stored display name. Session/adapters live in the package Backends.Django assembly and context contracts live in UnityIntegration.
 
 `DevAuthBootstrap` owns a `PlayerContext`, which owns the Identity/Core runtime and its authenticated session. Failed attempts roll back before allowing a fresh attempt. Disabling or destroying the bootstrap shuts down its runtime, stops its coroutine, and removes UI listeners; destruction resets its singleton. Disabling is terminal for that bootstrap instance: create a new bootstrap for a new lifetime. The sample uses `AutoConnect` through `NetcodeIdentityGate` after authentication; connection approval never creates the player directly. Provider logout notifications, general backend-health/outage monitoring remains deferred. Renewal-specific terminal disconnection is implemented below.
 
-`SetupExampleScene` now generates the password field, updates the account hint and wires `passwordInput`. The saved ExampleScene has matching wiring. Existing serialized fields and component identity are preserved.
+The saved ExampleScene wires the masked password field and login dependencies. Edit authored assets directly and synchronize the Full Demo sample; no scene generator is shipped.
 
 
 ## Session renewal
@@ -197,21 +179,21 @@ The coroutine owner delegates Unity yield instructions to Unity, tracks nested i
 
 `DjangoPlayerSession` replaces the auto-created/persistent TokenAPI singleton. It is an explicitly created MonoBehaviour owned by the sample login GameObject and disposed by the player context. Its existing origin validation, account generations, shared proactive renewal, bounded retries and single 401 replay are preserved. The authenticated request contract exposes no bearer credentials. Pending HTTP requests are tracked locally and aborted on account clear/replacement or disposal; there is no generic operation coordinator. Disable/destruction are terminal for that session instance. Player identity is no longer duplicated as a username in token storage.
 
-`DevAuthBootstrap` creates its context and binds the context session into the Django adapters. Adapters never discover token storage or create sessions. `AutoConnect` receives its login bootstrap through a serialized binding and uses the context's proof adapter; the saved scene and generator contain that binding and the session component. Existing sample UI services still assume one local player. Separate contexts, proof adapters and direct authenticated-session clients can coexist without sharing credentials. An unconfigured adapter fails explicitly; no fallback session is created.
+`DevAuthBootstrap` creates its context and binds the context session into the Django adapters. Adapters never discover token storage or create sessions. `AutoConnect` receives its login bootstrap through a serialized binding and uses the context's proof adapter; the saved scene contain that binding and the session component. Existing sample UI services still assume one local player. Separate contexts, proof adapters and direct authenticated-session clients can coexist without sharing credentials. An unconfigured adapter fails explicitly; no fallback session is created.
 
 Wallet now uses the independent WalletModule and DjangoWalletBackend rather than a singleton adapter. The sample-only reset uses an explicit session, waits for pending Wallet work, and refreshes confirmed balances after resetting. The old ShopAPI conversion method and shop conversion route were replaced.
 
-`NetcodeIdentityGate` already owns server trust, pending challenges and verified bindings. It remains the server context; no forwarding ServerContext wrapper was added. Server-only operation requires no player context or authenticated-session component. Idle health polling, a general recovery framework, capability negotiation, module-selection settings and generic runners remain deferred. Cosmetic Inventory is implemented below; Shop is the next extraction.
+`NetcodeIdentityGate` already owns server trust, pending challenges and verified bindings. It remains the server context; no forwarding ServerContext wrapper was added. Server-only operation requires no player context or authenticated-session component. Idle backend-health polling and a general recovery framework remain deferred. DjangoPlayerModules composes the explicitly selected mechanics; dependencies are validated rather than implicitly enabled.
 
 ## Independent Wallet
 
-`Scripts/Wallet/` is an engine-free assembly depending only on Core. `WalletModule` declares Identity as its lifecycle dependency without referencing an identity implementation. `PlayerContext.Initialize` accepts selected additional modules; an Identity-only consumer does not initialize Wallet. The sample selects Wallet in `DevAuthBootstrap` and supplies `DjangoWalletBackend` with the same explicitly owned authenticated session.
+`Runtime/Wallet/` (relative to the SDK package) is an engine-free assembly depending only on Core. `WalletModule` declares Identity as its lifecycle dependency without referencing an identity implementation. `PlayerContext.Initialize` accepts selected additional modules; an Identity-only consumer does not initialize Wallet. The sample selects Wallet in `DevAuthBootstrap` and supplies `DjangoWalletBackend` with the same explicitly owned authenticated session.
 
-The adapter owns HTTP/JSON mapping; Wallet owns confirmed immutable state and operation lifetime. `WalletDisplay.Bind(IWalletService)` supports UI without the demo login, avatar or network session. The sample bootstrap binding is optional for an explicitly bound view. `DevelopmentAccountReset` retains the demonstration reset flow outside Wallet. Both the scene generator and saved scene wire the sample dependencies. The replaced WalletAPI singleton and shop conversion route are removed.
+The adapter owns HTTP/JSON mapping; Wallet owns confirmed immutable state and operation lifetime. `WalletDisplay.Bind(IWalletService)` supports UI without the demo login, avatar or network session. The sample bootstrap binding is optional for an explicitly bound view. `DevelopmentAccountReset` retains the demonstration reset flow outside Wallet. The saved scene wires the sample dependencies. The replaced WalletAPI singleton and shop conversion route are removed.
 
 ## Independent cosmetic Inventory
 
-`Scripts/Inventory/` is engine-free and references only Core. InventoryModule declares Identity as its lifecycle dependency; it does not initialize Wallet, Shop, Equipment, Netcode or Unity assets. IInventoryBackend fetches owned cosmetics and fully owned nonempty sets. Immutable snapshots contain string IDs, display names, categories and set membership, with no prices, quantities, equipment or grant commands.
+`Runtime/Inventory/` (relative to the SDK package) is engine-free and references only Core. InventoryModule declares Identity as its lifecycle dependency; it does not initialize Wallet, Shop, Equipment, Netcode or Unity assets. IInventoryBackend fetches owned cosmetics and fully owned nonempty sets. Immutable snapshots contain string IDs, display names, categories and set membership, with no prices, quantities, equipment or grant commands.
 
 DjangoInventoryBackend uses the supplied authenticated session and rejects stale account responses. The sample endpoint `/api/inventory/` reads the existing ownership tables; seeded numeric IDs are encoded as strings. Replacement backends choose their stable content identifiers. No migration/history/receipt infrastructure is added.
 
@@ -225,11 +207,11 @@ A current Shop purchase needs exclusive access to both account caches. IWalletSt
 
 The reference catalog/purchase routes are `/api/shop/catalog/` and `/api/shop/purchase-offer/`. The catalog snapshot and purchase share the account lock/transaction; purchases validate exported metadata and bounded integer prices, debit all currencies and grant missing items atomically. Existing tables are reused. Replaced catalog/item/set purchase routes were removed. Django remains a reference implementation with the documented SQLite development limitations.
 
-ShopPanel/SetsPanel share a service-bound view and can render/buy without an avatar or Netcode. ShopSampleController on the persistent sample context GameObject owns requests so hiding a tab does not cancel them. Optional preview/equip/confirmation and confirmed-purchase refresh notifications live in that sample controller; DevAuthBootstrap only composes modules and binds it. AccessoryRegistry maps snapshots to the sample visual read models, with no backend request or network startup requirement. The replaced ShopAPI and equipment RPC/persistence paths have now been removed. The generator and saved scene wire the controller explicitly.
+ShopPanel/SetsPanel share a service-bound view and can render/buy without an avatar or Netcode. ShopSampleController on the persistent sample context GameObject owns requests so hiding a tab does not cancel them. Optional preview/equip/confirmation and confirmed-purchase refresh notifications live in that sample controller; DevAuthBootstrap only composes modules and binds it. AccessoryRegistry maps snapshots to the sample visual read models, with no backend request or network startup requirement. The replaced ShopAPI and equipment RPC/persistence paths have now been removed. The saved scene wires the controller explicitly.
 
 ## Independent Equipment: implemented
 
-`Scripts/Equipment/` is engine-free. EquipmentModule requires Identity and Inventory and accepts IEquipmentBackend. EquipmentState contains immutable configured slot/conflict definitions, item-to-slot mappings and a canonical revisioned loadout. ApplyItems overlays a validated item/set request on the canonical loadout, removes configured conflicts and sends one complete update. Unequip/Clear also persist one complete loadout. Preview accepts defined unowned items but changes only local presentation; canonical refresh/change and shutdown clear it.
+`Runtime/Equipment/` (relative to the SDK package) is engine-free. EquipmentModule requires Identity and Inventory and accepts IEquipmentBackend. EquipmentState contains immutable configured slot/conflict definitions, item-to-slot mappings and a canonical revisioned loadout. ApplyItems overlays a validated item/set request on the canonical loadout, removes configured conflicts and sends one complete update. Unequip/Clear also persist one complete loadout. Preview accepts defined unowned items but changes only local presentation; canonical refresh/change and shutdown clear it.
 
 Django provides `/api/equipment/loadout/` GET/POST and `/api/equipment/proof/` POST. Replace requests contain only string item IDs and expected_revision. The sample locks the account, checks ownership/conflicts, updates equip flags and increments equipment_revision atomically. Stale revisions reject without writing. Unknown mutation responses require explicit refresh; InventoryPanel offers a refresh action. There is no mutation retry, receipt system or offline queue. Run migrations for the new account revision column.
 
@@ -259,7 +241,7 @@ The sample Django service preserves MonthlyRewardSchedule and unique DailyAttend
 
 The module stages calendar/Wallet together before notifications. Unknown/dispatched cancelled claims require authoritative refresh and invalidate the affected Wallet cache; mutations are never retried automatically. Day-changed/already-claimed responses require calendar refresh. Explicit Refresh handles rollover; eligibility never uses the client clock. Account shutdown clears private state.
 
-DailyLoginPanel remains the existing serialized TMP calendar view, now bound to the interface. DailyRewardsSampleController owns claims/reads outside panel lifetime and publishes confirmed attendance for the optional achievement read refresh. Owner teardown disposes actual iterators, including disable during reservation notifications. Development reset waits for Daily Rewards and refreshes attendance after reset. The generator and saved scene wire both owners. Legacy DailyLoginAPI/DTOs and daily-login endpoints were removed.
+DailyLoginPanel remains the existing serialized TMP calendar view, now bound to the interface. DailyRewardsSampleController owns claims/reads outside panel lifetime and publishes confirmed attendance for the optional achievement read refresh. Owner teardown disposes actual iterators, including disable during reservation notifications. Development reset waits for Daily Rewards and refreshes attendance after reset. The saved scene wires both owners. Legacy DailyLoginAPI/DTOs and daily-login endpoints were removed.
 
 ## UPM package boundary
 
@@ -271,12 +253,12 @@ ApiResponse belongs to the UnityIntegration assembly alongside IAuthenticatedSes
 
 `Runtime/EquipmentVisuals` supplies an optional Unity renderer behind IEquipmentRenderer. CosmeticVisualCatalog maps string item/slot IDs to local prefabs and attachment mode. CosmeticRenderer owns per-avatar pools, explicit slot mounts/base meshes and rig/bone aliases. It prepares missing instances before replacing the displayed look, captures only avatar bones and restores original base visibility on clear/teardown. ResetBindings releases pools before character/configuration replacement. No backend, Netcode, UI or sample enum dependency enters this assembly.
 
-EquipmentVisualPresenter owns private service subscriptions and chooses local preview or confirmed equipment for standalone consumers. Supplying a verified public loadout makes that the canonical multiplayer display until a newer verified loadout arrives; previews remain local overrides. Demo PlayerAccessory delegates to this presenter and terminates on configuration failure. The generator and saved player prefab contain the same package-owned visual configuration. Art and sample-specific humanoid bindings remain under Assets; the old AccessoryPool/SkinnedMeshAttacher implementation is retired.
+EquipmentVisualPresenter owns private service subscriptions and chooses local preview or confirmed equipment for standalone consumers. Supplying a verified public loadout makes that the canonical multiplayer display until a newer verified loadout arrives; previews remain local overrides. Package PlayerAccessory delegates to this presenter and terminates on configuration failure. The saved player prefab contains the same package-owned visual configuration. Art and sample-specific humanoid bindings remain under Assets; the old AccessoryPool/SkinnedMeshAttacher implementation is retired.
 
-## Complete package avatar/starter integration
+## Package avatar and demo integration
 
 Reusable player lifecycle, verified spawning and equipment publication moved with GUIDs to Runtime/Netcode.Avatars. NetworkPlayerIdentity replicates approved public identity without TMP; the demo PlayerNameplate renders it. AvatarRegistry is session-local on NetworkManager; late despawn identifies the old object so replacements survive. The demo ClientPlayerAvatars retains only its legacy presentation locator over that registry. PlayerAccessory delegates preview/public rendering to EquipmentVisualPresenter.
 
 Optional CharacterControls supplies the prior client-authoritative transform/animation/movement plus a registry-bound camera that handles replacement and reenable. ClientHostConnection supplies the existing client-first/host-fallback policy; the sample AutoConnect owns trust/account/role setup and delegates connection, including its active lifetime in the continuation predicate. DjangoPlayerModules composes selected reference adapters/services under PlayerContext; the sample login owns UI, not construction of every mechanic. Rejected concurrent initialization cannot replace accepted service references.
 
-The optional Game Starter sample ships the remaining UI/composition examples and an art-free generator. The full repository demo continues to use its existing authored art. Runtime owners expose their existing scoped events; no global event bus or additional audio framework was added.
+The single optional Full Demo sample ships the authored scene, art, UI and composition scripts synchronized from Unity/Assets by tools/sync_full_demo.py. It runs against a separately hosted backend. Do not import it into the repository project, which already contains the same GUIDs and types. Runtime owners expose their existing scoped events; no global event bus or additional audio framework was added.

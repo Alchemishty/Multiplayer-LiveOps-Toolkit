@@ -8,14 +8,14 @@
 | `ShopAccessoryItem` | Extends `AccessoryItemData` with backend-sourced `displayName`, `isOwned`, `costs`. |
 | `ShopCatalog` | Runtime object merging backend `AccessoriesResponse` with local `AccessorySO`. All pricing/ownership queries go here. |
 | `AccessorySetData` | A purchasable bundle of accessory IDs with its own costs and ownership flag. |
-| `AccessoryState` | `INetworkSerializable` struct wrapping a JSON string (e.g. `{"Headwear":1,"MainHand":20}`) for NetworkVariable sync. |
-| `AccessoryRegistry` | Singleton that owns the `ShopCatalog`, loads it from backend on Netcode connect, and exposes all accessory lookups. |
-| `PlayerAccessory` | `NetworkBehaviour` on each player avatar. Owner requests a server write of equipped JSON; remotes read and apply visuals. |
-| `AccessoryPool` | Per-avatar component implementing `IAccessoryVisualSync`. Pools accessory GameObjects and manages one active item per slot independently for each player. |
-| `SkinnedMeshAttacher` | Static utility that reparents a skinned-mesh accessory prefab onto an avatar's bone hierarchy. |
+| `AccessoryState` | `INetworkSerializable` wrapper for revisioned public equipment JSON, containing only slot/item IDs and revision. |
+| `AccessoryRegistry` | Demo singleton that builds ShopCatalog from bound confirmed Shop/Inventory snapshots and local accessory mappings; it performs no backend request. |
+| `PlayerAccessory` | `NetworkBehaviour` on each player avatar. Server publishes only gate-approved canonical equipment revisions; clients read and render them. |
+| `CosmeticRenderer` | Per-avatar IEquipmentRenderer implementation with pools, slot/rig bindings and base-mesh restoration. |
+| `EquipmentVisualPresenter` | Selects canonical/verified equipment or a local-only preview for IEquipmentRenderer. |
 | `ClientPlayerAvatars` | Singleton registry mapping Netcode `clientId` → avatar `GameObject`. Tracks local player's avatar. |
 | `DjangoPlayerSession` | Owns an in-memory JWT session with shared proactive renewal. |
-| `SendWithTokenRefresh` | Extension method on `UnityWebRequest`: attaches Bearer token, retries once on 401 after refresh. |
+| `IAuthenticatedSession.Send` | Explicit-session authenticated dispatch with bounded renewal and one replay on 401; mechanic mutations are never automatically retried. |
 | `DevAuthBootstrap` | Presents username/password login through Identity/Core before multiplayer connection. |
 | `WalletEntry` | DTO: `{ currency: { name }, amount }` representing one currency balance. |
 | `AutoConnect` | Tries Netcode Client first; falls back to Host after timeout. |
@@ -31,7 +31,7 @@
 | Equipped accessories (persistent) | Backend | REST `GET/POST /api/equipment/loadout/` |
 | Wallet balances | Backend | REST `GET /api/wallet/`; displayed by `WalletDisplay` |
 | Master accessory catalog (prefabs) | Client (local asset) | `AccessorySO` ScriptableObject — never synced |
-| Public player ID/nameplate | Server after signed identity verification | Server-written `PlayerNameplate.PlayerId` / `Username`; unverified peers cannot observe sample players |
+| Public player ID/nameplate | Server after signed identity verification | Server-written `NetworkPlayerIdentity.PlayerId` / `Username`; unverified peers cannot observe sample players |
 | JWT tokens | Client-local | In memory via `DjangoPlayerSession`; never replicated |
 | Player avatar registry | Client-local | `ClientPlayerAvatars` singleton; populated by `PlayerAvatarSetup.OnNetworkSpawn` |
 | Player movement | Client (owner authority) | `SimplePlayerMovement` writes `transform.position`; `ClientNetworkTransform` syncs to all clients. Client-authoritative — the owner is trusted. |
@@ -60,15 +60,15 @@ Authenticated adapters use an explicitly supplied `IAuthenticatedSession` (Beare
 This project uses **Unity Netcode for GameObjects**. All new and modified code must follow:
 
 1. **Lifecycle:** `Awake` (local refs only) → `OnNetworkSpawn` (subscribe `OnValueChanged`, read initial values, RPCs safe) → `OnNetworkDespawn` (unsubscribe, cleanup) → `OnDestroy` (local only). Always call `base.OnNetworkSpawn()` and `base.OnNetworkDespawn()`. `PlayerAccessory` and `PlayerAvatarSetup` already follow this correctly.
-2. **Initial value pattern:** `OnValueChanged` does NOT fire for the initial value. Read explicitly in `OnNetworkSpawn`: see `PlayerAccessory.OnNetworkSpawn` which calls `ApplyRemoteAccessoryState(AccessoryJson.Value.Json)` for non-owners.
+2. **Initial value pattern:** `OnValueChanged` does NOT fire for the initial value. Read explicitly in `OnNetworkSpawn`: see PlayerAccessory.OnNetworkSpawn, which explicitly reads AccessoryJson after subscribing.
 3. **Never subscribe to `OnValueChanged` in `Awake`** — `NetworkVariable` isn't initialized yet.
 4. **Never unsubscribe in `OnDestroy`** — use `OnNetworkDespawn` (fires first for networked objects).
-5. **Validate deserialized payloads:** `AccessoryState.Json` can be null or empty — `PlayerAccessory.ApplyRemoteAccessoryState` guards with `if (string.IsNullOrEmpty(accessoryJson)) return;`. Apply this pattern to all `NetworkVariable` JSON payloads.
+5. **Validate deserialized payloads:** PlayerAccessory parses public equipment through EquipmentPublicState.Parse, which validates the wire shape and revision. Treat malformed required state as an error; do not silently skip it.
 6. **RPCs cannot be called before `OnNetworkSpawn`** — fails silently.
 7. **Check `IsOwner`/`IsServer` before writing `NetworkVariables`** — `PlayerAccessory.AccessoryJson` is server-written only from the gate-approved EquipmentLoadout. There is no client equipment RPC. Publish only after spawn; keep ownership/conflict validation in the backend and module.
 8. **Client authority for movement and animation.** The default `NetworkTransform` and `NetworkAnimator` are server-authoritative — only the server/host can change the synced values. For client-driven systems like player movement, use `ClientNetworkTransform` and `ClientNetworkAnimator` which override `OnIsServerAuthoritative()` to return `false`. Without this, client movement and animations will not propagate to other players. The host appears to work because the host IS the server.
 9. **NetworkBehaviours must be on the prefab, not added at runtime.** A `NetworkBehaviour` added via `AddComponent` after `NetworkObject.Spawn` does not properly register with Netcode — `IsOwner`, `IsServer`, and RPCs may not work. `SimplePlayerMovement` is baked on the player prefab and uses `IsOwner` to gate input, not added conditionally at runtime.
-10. **Player prefab component list:** `NetworkObject`, `ClientNetworkTransform`, `ClientNetworkAnimator`, `SimplePlayerMovement`, `PlayerAvatarSetup`, `PlayerAccessory`, `AccessoryPool`, `Animator`, `CharacterController`, `PlayerNameplate`. All baked on the prefab. The saved scene and player prefab are the source of truth.
+10. **Player prefab component list:** `NetworkObject`, `ClientNetworkTransform`, `ClientNetworkAnimator`, `SimplePlayerMovement`, `PlayerAvatarSetup`, `PlayerAccessory`, `CosmeticRenderer`, `NetworkPlayerIdentity`, `Animator`, `CharacterController`, `PlayerNameplate`. All baked on the prefab. The saved scene and player prefab are the source of truth.
 
 API URLs use `ApiConfig.BASE_URL` (default `http://localhost:8000`, overridable via `SetBaseUrl`). Contracts above describe the Unity client; backend enforcement must be checked separately.
 

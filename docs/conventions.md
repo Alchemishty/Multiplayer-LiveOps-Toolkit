@@ -1,87 +1,47 @@
-# conventions.md
+# Coding conventions
 
-## Existing Patterns
+These standards apply to new and modified code. See [architecture](architecture.md) for ownership and assembly boundaries, and [enforcement](../enforcement/) for review rules.
 
-### Null Handling
-The codebase uses **two distinct strategies**. Domain/runtime classes throw explicitly:
-- `AccessoryPool.Equip` throws `InvalidOperationException` for null `prefab` or `avatarRoot`
-- `SkinnedMeshAttacher.Attach` uses throw-expression: `FindRig(avatarRoot) ?? throw new InvalidOperationException(...)`
-- The selected equipment visual integration reports a fatal configuration error if its per-player `IAccessoryVisualSync` or cosmetic mapping is missing
+## Dependencies and responsibility
 
-API and UI code is more lenient — null-conditional callbacks (`onError?.Invoke()`), silent skips (`ShopCatalog.BuildFromBackendResponse` skips unknown items), and null-guards before use (`if (walletText != null)`).
+Keep business rules in the engine-free mechanic assemblies. Unity components own scene integration, rendering, network lifecycle or UI; Django adapters own HTTP/JSON mapping. Depend on focused service/backend interfaces. Do not let package runtime reference demo code, TMP or uGUI.
 
-### Naming
-- **Classes:** PascalCase — `PlayerAccessory`, `ShopCatalog`, `AccessoryRegistry`
-- **Private fields:** camelCase, no prefix — `equippedPrefabsBySlot`, `activeShopCatalog`, `shopCatalogLoaded`
-- **Constants:** UPPER_SNAKE_CASE — `BASE_URL`, `ACCESSORIES_API_URL`, `ACCESS_TOKEN_KEY`
-- **SerializeField:** camelCase — `address`, `port`, `masterCatalogSO`, `statusText`
-- **Booleans:** inconsistent — `isPopulated`, `isOwned`, `isCacheInitialized` vs bare `shopCatalogLoaded`, `done`
-- **Singletons:** `Instance` property pattern across `AccessoryPool`, `TabManager`, `WalletDisplay`, `ClientPlayerAvatars`
-- **Suffixes:** `SO` for ScriptableObjects (`AccessorySO`), `API` for REST clients (`ShopAPI`, `WalletAPI`)
-- **Interfaces:** `I` prefix (`IAccessoryVisualSync`)
-- **Debt:** UI builder code in `ShopPanel` uses abbreviations (`btn`, `tmp`, `bg`, `go`, `btnImg`)
+Use composition and existing owners. Add abstractions only for an implemented consumer and identify the responsibility they replace. Bug fixes should address the root cause with minimal changes; avoid unrelated restructuring.
 
-### Data Lifecycle
-- **ScriptableObjects** as immutable master data: `AccessorySO` holds all known accessories with lazy-cached dictionaries
-- **`[SerializeField]`** for inspector-wired dependencies: `masterCatalogSO`, UI references (`statusText`, `walletText`)
-- **Runtime state** built from backend + SO merge: `ShopCatalog` constructed in `AccessoryRegistry.LoadShopCatalog`
-- **Network state:** `NetworkVariable<AccessoryState>` syncs equipped accessories as JSON string
-- **DTOs:** `[System.Serializable]` classes with `[JsonProperty]` for snake_case mapping (`ShopApiDTOs.cs`)
-- **Persistence:** JWT tokens owned in memory by an explicitly created `DjangoPlayerSession`; previous PlayerPrefs credentials are removed
+## Null and state handling
 
-### Network Sync Patterns
-- **Client-authoritative transform/animation:** `ClientNetworkTransform` and `ClientNetworkAnimator` override `OnIsServerAuthoritative() → false`. Used on the player prefab so the owning client's movement and animation changes propagate to all other clients. The default server-authoritative versions silently ignore client-side changes — this appears to work for the host (who is the server) but breaks all clients.
-- **Server-authoritative state:** `PlayerAccessory.AccessoryJson` uses `WritePermission.Server` and accepts only the gate-approved signed equipment snapshot. Clients persist their own equipment through IEquipmentService; the host/server verifies public proofs before replication. Do not accept arbitrary client IDs/loadouts through an RPC.
-- **Prefab-baked NetworkBehaviours:** All `NetworkBehaviour` components must exist on the prefab before spawn. Adding via `AddComponent` after spawn breaks Netcode ownership tracking (`IsOwner` returns wrong values, RPCs fail). `SimplePlayerMovement` is on the prefab and uses `IsOwner` to gate input.
+Throw ArgumentNullException for required null arguments and InvalidOperationException for broken configuration or invalid lifecycle use. Diagnostics must identify the missing dependency and its owner. Required scene references and required cosmetic mappings must fail explicitly.
 
-### Async Patterns
-All async work uses **coroutines** with callback pairs:
-- `IEnumerator` methods yielding `UnityWebRequest` — e.g., `ShopAPI.GetAccessories(Action<AccessoriesResponse> onSuccess, Action<string> onError)`
-- Polling loops: `while (AccessoryRegistry.Instance == null || !AccessoryRegistry.Instance.IsShopCatalogLoaded()) yield return null;`
-- Events for state change notification: `event Action EquippedStateChanged`, `event Action ShopCatalogLoaded`, `event Action OnAuthenticated`
-- Authenticated dispatch through an injected session: `yield return session.Send(request, response)`
-- No async/await or UniTask anywhere
+Absence can be valid: an optional integration, a snapshot not yet loaded, or an avatar not yet spawned. Guard those states deliberately. Null-conditional callbacks are appropriate only when the callback is optional. Validate deserialized objects and their complete shape before publishing state. Never publish partial account snapshots or consume a malformed response silently.
 
-### File Organization (typical member order)
-1. Constants / static readonly fields
-2. Serialized fields (`[SerializeField]`)
-3. Private fields / backing state
-4. Public properties and events
-5. `NetworkVariable` declarations (`PlayerAccessory`)
-6. Unity lifecycle: `Awake` → `Start` → `OnEnable` → `Update`/`LateUpdate` → `OnDestroy`
-7. Netcode lifecycle: `OnNetworkSpawn` → `OnNetworkDespawn`
-8. Public API methods
-9. Private helpers
-10. Nested types at bottom (`DevAuthBootstrap.DevAuthResponse`, `LoginRewardPanel.MessageResponse`)
+## Names and serialization
 
----
+Use PascalCase for types/methods/properties, camelCase without prefixes for private and serialized fields, UPPER_SNAKE_CASE for compile-time constants, and PascalCase for static readonly fields. Interfaces start with I.
 
-## Mandatory Standards
+Names must describe their contents and purpose: equippedItemsBySlot, playerSession, isLoading, hasSnapshot. Avoid abbreviations except established terms such as id, url and api.
 
-### Null Safety
-Never silently swallow null when correctness depends on the value. If a method requires a non-null argument, **throw with a diagnostic message** identifying what is missing and where. Use `TryGetComponent`/`TryGetValue` only when absence is a valid runtime state (e.g., optional UI element). Every JSON deserialization must null-check the result before use. **Debt:** `ShopCatalog.BuildFromBackendResponse` silently skips missing master-catalog entries — should at minimum log a warning. API callbacks lack null-checks on deserialized response bodies in several places (`DailyLoginAPI.ClaimDailyReward` error parsing).
+Preserve Unity .meta files and GUIDs. Use FormerlySerializedAs when renaming serialized fields. Update authored scene/prefab wiring alongside code changes. JSON DTO names must match their wire contracts explicitly, using JsonProperty where mapping is needed. Immutable service snapshots are distinct from mutable transport DTOs and authored configuration assets.
 
-### SOLID Principles
-- **Single Responsibility:** One class, one reason to change. `ShopPanel` coordinates shop UI and purchase flow. Shared UI construction uses `ShopUIFactory`, display formatting uses `ShopDisplayFormatter`, button decisions use `ShopButtonStateResolver`, and equipment/preview operations use `AccessoryEquipService`. Further separation should be justified by current responsibilities.
-- **Open/Closed:** Extend via ScriptableObjects and composition. `AccessorySO` is a good example. New accessory types should not require modifying `AccessoryPool`.
-- **Liskov:** Always call `base.OnNetworkSpawn()` / `base.OnNetworkDespawn()`. `PlayerAvatarSetup` correctly does this.
-- **Interface Segregation:** `IAccessoryVisualSync` is well-scoped. Keep interfaces focused.
-- **Dependency Inversion:** Depend on abstractions/registries, not concrete MonoBehaviours. `PlayerAccessory` resolves its per-player visual component through `IAccessoryVisualSync`; `AccessoryPool` implements that interface.
+## Lifetimes and asynchronous work
 
-### Naming
-Fully descriptive names. No abbreviations (`btn`→`button`, `tmp`→`textLabel`, `bg`→`background`, `go`→`uiElement`). Booleans must read as questions: `isLoading`, `hasAuthority`, `isShopCatalogLoaded` (not `shopCatalogLoaded`). Collections named by contents: `equippedPrefabsBySlot` ✓, `availableSets` ✓. Constants: `UPPER_SNAKE_CASE` for compile-time constants, `PascalCase` for `static readonly`.
+Use IEnumerator operations with explicit completion callbacks, consistent with the existing modules and adapters. Durable account owners drive and dispose operations; hiding a panel must not cancel a purchase or claim. Dispose an unstarted reserved iterator if a synchronous observer ended its owner before coroutine startup.
 
-### Performance
-- **No `GetComponent`/`Find` in `Update` or per-frame methods** — cache in `Awake`/`OnNetworkSpawn`. `SimplePlayerMovement.Start` correctly caches `animator`; `ThirdPersonCamera` queries `ClientPlayerAvatars.Instance` in `LateUpdate` which is acceptable (singleton field read) but the `GetComponent<CharacterController>` call should be cached.
-- **No allocations in hot paths.** `SimplePlayerMovement.Update` is allocation-free ✓.
-- **No `Debug.Log` in builds** — wrap in `#if UNITY_EDITOR` or use `[Conditional("UNITY_EDITOR")]`. **Debt:** Widespread unconditional `Debug.Log`/`Debug.LogError` calls across API and registry classes.
-- Cache `Animator.StringToHash` results as `static readonly int` — `SimplePlayerMovement.SpeedParam` ✓.
+Deliver completion once, reject stale-account responses and clear private state on shutdown. Uncertain mutations require authoritative refresh; never automatically replay a mutation. Session renewal and bounded authenticated dispatch belong to DjangoPlayerSession, through injected IAuthenticatedSession contracts.
 
-### Serialization Safety
-Every deserialized object must be null-checked before field access. `AccessoryLoadout.DeserializeAccessoryState` correctly validates ✓. Use `[FormerlySerializedAs("oldName")]` when renaming any `[SerializeField]` to preserve saved scene/prefab data. DTOs mapping to backend JSON must use `[JsonProperty("snake_case")]` consistently — `ShopApiDTOs` does this ✓.
+Pair event subscriptions with cleanup in the same lifetime. NetworkVariable subscriptions belong in OnNetworkSpawn/OnNetworkDespawn, with explicit initial-state reads. Call base lifecycle methods. Keep all NetworkBehaviours on the prefab before spawn.
 
-### Testing
-Domain logic classes (`EquipmentModule`, `AchievementsModule`, `ShopCatalog`) must have unit tests covering valid use, edge cases, and expected exceptions. Existing tests are exemplary — `EquipmentModuleTests` and `AchievementsModuleTests` cover all branches. Maintain this standard for all new domain types.
+## Visuals and authority
 
-### Design only for concrete consumers
-Do not design abstractions, extension points or failure policies until a concrete module needs them. Every new type must identify its current consumer and the existing responsibility it takes over. Reuse an existing owner instead of adding a forwarding wrapper. An anticipated future module is not sufficient justification.
+CosmeticRenderer implements IEquipmentRenderer and owns per-avatar pools, slot bindings and mesh restoration. EquipmentVisualPresenter selects local preview or canonical presentation. PlayerAccessory publishes only the verification gate's approved equipment snapshot; previews never write network state.
+
+The supplied movement and animation are owner-authoritative through ClientNetworkTransform and ClientNetworkAnimator. Account mechanics remain backend-authoritative. Never replicate credentials, wallets, full inventories or private progress.
+
+## Performance
+
+Cache components and lookups outside per-frame loops. Avoid allocations and repeated hierarchy searches in hot paths. Use dictionary lookups and pools where they serve current consumers. Cache Animator.StringToHash values as static readonly fields. Keep routine development logging out of builds; retain explicit actionable failure diagnostics without credentials or raw assertions.
+
+## Verification and review
+
+Every code change needs appropriate regression coverage: engine-free logic in EditMode, Unity integration in PlayMode, backend mechanics in Django tests. See [testing](testing.md). Refresh Unity and inspect the console after code changes. Review changed code against enforcement rules and fix safe adjacent violations.
+
+Saved demo assets are authoritative. After demo scripts/assets change, synchronize Full Demo with tools/sync_full_demo.py and verify with --check. Scene generators are not part of the project.

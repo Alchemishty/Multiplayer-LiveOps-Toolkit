@@ -49,8 +49,6 @@ docs:
   conventions: "docs/conventions.md"
   domain: "docs/domain.md"
   testing: "docs/testing.md"
-  memory: "memory/"
-  scratch: "scratch/"
 
 enforcement:
   import_direction:
@@ -69,17 +67,3 @@ enforcement:
     principles: "SOLID"
     naming: "fully-descriptive"
     data_structures: "game-design-aware"
-
-gardening:
-  enabled: true
-  trigger: manual
-  skip_directories:
-    - "Unity/Library/"
-    - "Unity/Temp/"
-    - "Unity/Logs/"
-    - "Unity/obj/"
-    - "TextMesh Pro/"
-  skip_extensions:
-    - ".meta"
-    - ".unity"
-    - ".asset"

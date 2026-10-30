@@ -2,11 +2,9 @@
 
 **Rule:** Lower layers must not reference higher layers. Layers below are ordered from lowest to highest; code may depend only on the same layer or earlier layers.
 
-```
-Core → Identity/Wallet/Inventory → Shop/Equipment/Achievements/DailyRewards → Data → API → Registry → Networking → Player → UI → Example
-```
+Package assembly references enforce SDK boundaries; demo layers are checked by directory and type references. There is no single linear ordering across independent integrations: use the dependency table below.
 
-SDK root: `Unity/Packages/com.alchemishty.multiplayer-liveops-toolkit/`. `Runtime/` paths below are relative to that package. Remaining `Scripts/` paths are under the repository's demo `Assets/`. Runtime assembly references enforce the package boundary; no SDK assembly may reference the demo assembly `MultiplayerLiveOpsToolkit` or TMP/uGUI.
+SDK root: `Unity/Packages/com.alchemishty.multiplayer-liveops-toolkit/`. Runtime paths below are relative to that package. Demo Scripts paths are under `Unity/Assets/`. No SDK assembly may reference the demo assembly `MultiplayerLiveOpsToolkit` or TMP/uGUI.
 
 ## Layer-to-Directory Mapping
 
@@ -24,50 +22,23 @@ SDK root: `Unity/Packages/com.alchemishty.multiplayer-liveops-toolkit/`. `Runtim
 | Netcode.Avatars | `Runtime/Netcode.Avatars/` | Netcode, Identity, Equipment, EquipmentVisuals and Unity transport; no demo or UI |
 | CharacterControls | `Runtime/CharacterControls/` | Netcode.Avatars, Unity and Netcode components; no demo/UI/backend |
 | Data | `Scripts/Data/`, `Scripts/ScriptableObjects/` | Core |
-| API | `Runtime/UnityIntegration/`, `Runtime/Backends/Django/` | Core, Identity, Wallet, Inventory, Shop, Equipment, Achievements, DailyRewards, Data |
-| Registry | `Scripts/Registry/` | Core, Shop, Inventory, Equipment, Achievements, DailyRewards, Data, API |
-| Networking | `Runtime/Netcode/` | Core, Identity, Equipment, Data, API and Netcode; no player/UI/prefab dependencies |
-| Player | `Scripts/Player/` | Core, Identity, Equipment, Data, API, Registry, Networking |
-| UI | `Scripts/UI/`, `Scripts/Example/UI/` | Core, Shop, Inventory, Equipment, Achievements, DailyRewards, Data, API, Registry, Networking, Player |
+| UnityIntegration | `Runtime/UnityIntegration/` | Core, Identity and Unity; no Django/demo dependency |
+| Backends.Django | `Runtime/Backends/Django/` | Core, mechanic assemblies and UnityIntegration; no demo dependency |
+| Registry | `Scripts/Registry/` | Core, Shop, Inventory, Equipment, Achievements, DailyRewards, Data, UnityIntegration, Backends.Django |
+| Networking | `Runtime/Netcode/` | Identity, Equipment, Unity Netcode and Collections; no demo/UI/prefab dependencies |
+| Player | `Scripts/Player/` | Core, Identity, Equipment, Data, UnityIntegration, Backends.Django, Registry, Networking |
+| UI | `Scripts/UI/`, `Scripts/Example/UI/` | Core, Shop, Inventory, Equipment, Achievements, DailyRewards, Data, UnityIntegration, Backends.Django, Registry, Networking, Player |
 | Example | `Scripts/Example/` | All layers |
 
 ## Checking
 
-Legacy code uses global C# types. Core, Identity, Wallet and Inventory use their matching `MultiplayerLiveOpsToolkit.*` namespaces in assemblies with no engine references. Identity depends on Core; legacy composition/adapters may reference both. Check **directory paths, type references and assembly references**, not just `using` directives.
+Check directory paths, type references and .asmdef references, not just using directives. Demo types include global C# types; SDK assemblies use MultiplayerLiveOpsToolkit namespaces. For every changed type, identify its owning assembly and ensure dependencies follow the table. Lifecycle module dependencies are additional initialization constraints, not permission to import a higher layer.
 
-For each `.cs` file:
-1. Determine its layer from its directory path
-2. Scan for references to types defined in other layers (class names, method calls, field types)
-3. Verify all referenced types belong to the same layer or a lower layer
-4. Flag any reference to a type in a higher layer
+Examples of forbidden dependencies:
 
-**How to identify cross-layer references without namespaces:**
-- A file in `Scripts/Data/` that references `ShopAPI` (defined in `Scripts/API/`) → Data referencing API → violation
-- A file in `Scripts/API/` that references `AccessoryManager` (defined in `Scripts/UI/`) → API referencing UI → violation
-- A file in `Scripts/Player/` that references `AccessoryRegistry` (defined in `Scripts/Registry/`) → Player referencing Registry → allowed
+- A demo ShopCatalog referencing DjangoShopBackend: data should receive snapshots/DTOs, not perform HTTP work.
+- A Django adapter referencing ShopPanel: backend code must complete through contracts/callbacks, leaving UI to subscribe.
+- NetcodeIdentityGate referencing PlayerNameplate or a demo prefab: the gate verifies peers independently of rendering/spawning.
+- A package runtime type referencing AccessoryRegistry: the registry belongs to the demo.
 
-## Violations
-
-```csharp
-// VIOLATION — Data layer file referencing an API type
-// File: Scripts/Data/ShopCatalog.cs
-private ShopAPI shopApi; // ShopAPI lives in Scripts/API/ — upward reference
-
-// VIOLATION — API layer file referencing a UI type
-// File: Scripts/API/ShopAPI.cs
-private ShopPanel panel; // ShopPanel lives in Scripts/UI/ — upward reference
-
-// VIOLATION — Registry referencing Player
-// File: Scripts/Registry/AccessoryRegistry.cs
-private PlayerAccessory player; // PlayerAccessory lives in Scripts/Player/ — upward reference
-```
-
-## How to Fix Common Violations
-
-**Data needs API response types:** Move the shared DTOs into Data layer. API layer uses Data DTOs, not the other way around.
-
-**API needs to notify UI:** Use C# events or callbacks. API fires an event, UI subscribes. No direct reference needed.
-
-**Registry needs Player state:** Pass the state as a parameter from the calling layer. Registry provides data; the caller (Player or UI) provides context.
-
-**Player needs UI feedback:** Fire a C# event. UI subscribes in its own layer.
+Pass required state through existing contracts, expose scoped events for observers, and keep presentation in its consuming integration. Never move demo dependencies into the SDK to work around a forbidden reference.

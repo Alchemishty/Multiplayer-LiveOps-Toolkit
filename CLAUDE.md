@@ -27,16 +27,6 @@ Unity project root: `Unity/`. Use it for Unity Hub/CLI; Unity asset paths remain
 8. Bug fixes are not refactoring opportunities — minimal changes only
 9. **Saved scene/prefabs are authoritative.** Generators have been removed. Update authored demo assets directly, then run `python3 tools/sync_full_demo.py` and verify with `--check` to synchronize the Full Demo sample.
 
-## Commands
-
-- `/implement-feature` — plan → TDD → verify → cleanup → retrospective
-- `/fix-bug` — reproduce → root cause → test → fix → verify
-- `/create-tests` — generate EditMode/PlayMode tests for existing code
-- `/deslop` — code cleanup
-- `/garden` — entropy scan and maintenance
-- `/retrospective` — capture learnings to memory
-- `/code-review` — fresh-context review against all enforcement rules
-
 ## Unity MCP Tools
 
 You have access to a live Unity editor via MCP tools. Use them:
@@ -47,7 +37,7 @@ You have access to a live Unity editor via MCP tools. Use them:
 
 ## Code Review
 
-When reviewing code (or when `/code-review` is invoked), check the diff against every file in `enforcement/`. Each rule is a hard gate — violations must be fixed before the change is complete.
+When reviewing code, check the diff against every file in `enforcement/`. Each rule is a hard gate — violations must be fixed before the change is complete.
 
 ## Stack
 
