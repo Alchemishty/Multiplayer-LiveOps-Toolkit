@@ -69,7 +69,7 @@ Account authority and gameplay authority are separate. The supplied movement is 
 ## Current support
 
 - **Unity:** 2022.3; developed and tested with 2022.3.33f1.
-- **Platforms:** macOS desktop and Android builds. Android is verified on an ARM64 Android 13 emulator using Unity 2022.3.33f1, NGO 1.9.1, IL2CPP and OpenGL ES 3.  Follow [Android setup and build](Documentation/android.md). Physical Android devices, Unity 6 Android, iOS, Windows, Linux and Unity's dedicated-server build target should work but are untested.
+- **Platforms:** macOS desktop and Android builds. Android is verified on an ARM64 Android 13 emulator using Unity 2022.3.33f1, NGO 1.9.1, IL2CPP and OpenGL ES 3. Physical Android devices, Unity 6 Android, iOS, Windows, Linux and Unity's dedicated-server build target should work but are untested.
 - **Inventory:** cosmetic ownership. General item stacks, consumables and equipment stats are outside the current implementation.
 - **Backend:** Django is a reference implementation. Games choose their own hosting, database operations and additional economy policies.
 - **Availability:** terminal authentication/renewal and handshake failures disconnect. Immediate detection of an idle backend outage remains an open gap.
