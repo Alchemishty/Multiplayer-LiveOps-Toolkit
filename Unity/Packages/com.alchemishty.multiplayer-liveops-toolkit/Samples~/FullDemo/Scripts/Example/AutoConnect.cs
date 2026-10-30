@@ -6,6 +6,7 @@ using System.IO;
 using MultiplayerLiveOpsToolkit.Identity;
 using MultiplayerLiveOpsToolkit.Equipment;
 using UnityEngine;
+using UnityEngine.Networking;
 using Unity.Netcode;
 using Unity.Netcode.Transports.UTP;
 
@@ -53,16 +54,40 @@ public class AutoConnect : MonoBehaviour
 
         if (verifier == null)
         {
+            const string CONFIGURATION_FAILURE = "Identity configuration error: export and configure LiveOpsIdentityTrust.json before connecting.";
             string failure = null;
+            string trustUrl = null;
             try
             {
                 string path = Environment.GetEnvironmentVariable("LIVEOPS_IDENTITY_TRUST_FILE");
                 if (string.IsNullOrEmpty(path)) path = Path.Combine(Application.streamingAssetsPath, "LiveOpsIdentityTrust.json");
-                if (new FileInfo(path).Length > 16384) throw new ArgumentException("Public trust file is oversized.");
-                verifier = IdentityTrustConfiguration.CreateVerifier(File.ReadAllText(path));
+                trustUrl = path.Contains("://") ? path : new Uri(Path.GetFullPath(path)).AbsoluteUri;
+                var location = new Uri(trustUrl);
+                if (!location.IsFile && !trustUrl.StartsWith("jar:file://", StringComparison.Ordinal))
+                    throw new ArgumentException("Public trust must be a local file or packaged asset.");
+                if (location.IsFile && new FileInfo(location.LocalPath).Length > 16384)
+                    throw new ArgumentException("Public trust file is oversized.");
             }
-            catch (Exception exception) when (exception is IOException || exception is UnauthorizedAccessException || exception is ArgumentException)
-            { failure = "Identity configuration error: export and configure LiveOpsIdentityTrust.json before connecting."; }
+            catch (Exception exception) when (exception is IOException || exception is UnauthorizedAccessException || exception is ArgumentException || exception is UriFormatException)
+            { failure = CONFIGURATION_FAILURE; }
+            if (failure == null)
+            {
+                using (var request = UnityWebRequest.Get(trustUrl))
+                {
+                    request.timeout = 15;
+                    var operation = request.SendWebRequest();
+                    while (!operation.isDone && request.downloadedBytes <= 16384) yield return null;
+                    if (!operation.isDone) request.Abort();
+                    if (request.result != UnityWebRequest.Result.Success || request.downloadedBytes > 16384)
+                        failure = CONFIGURATION_FAILURE;
+                    else
+                    {
+                        try { verifier = IdentityTrustConfiguration.CreateVerifier(request.downloadHandler.text); }
+                        catch (ArgumentException) { failure = CONFIGURATION_FAILURE; }
+                    }
+                }
+            }
+            if (!isActiveAndEnabled || (!isDedicatedServer && !authBootstrap.IsAuthenticated)) yield break;
             if (failure != null) { OnIdentityFailure(failure); yield break; }
         }
         if (isDedicatedServer) gate.ConfigureEquipment(new EquipmentProofVerifier(verifier), null);

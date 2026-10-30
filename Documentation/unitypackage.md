@@ -27,6 +27,8 @@ Choose one installation format: the UPM package or this `.unitypackage`. They co
 4. Set up the separately hosted Django reference backend, accounts and public verification trust using the repository's [demo setup](https://github.com/Alchemishty/Multiplayer-LiveOps-Toolkit/blob/main/Documentation/getting-started.md). Default backend URL: `http://localhost:8000`.
 5. Press Play and sign in. Run a second instance with another account to test multiplayer.
 
+For an Android APK, follow [Android setup and build](https://github.com/Alchemishty/Multiplayer-LiveOps-Toolkit/blob/main/Documentation/android.md) after import. The verified Android configuration uses Unity 2022.3.33f1, ARM64 IL2CPP and OpenGL ES 3.
+
 The backend and private signing keys are not included in the asset package. Art/character replacement is described in `Documentation/equipment-visuals.md` inside the imported folder.
 
 ## Build the distribution from source

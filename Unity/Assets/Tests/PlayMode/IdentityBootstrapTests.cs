@@ -267,6 +267,69 @@ public class IdentityBootstrapTests
         yield return VerifyAutoConnectCancellation(false, true);
     }
 
+    [UnityTest]
+    public IEnumerator AutoConnect_PublicTrustFileUri_LoadsBeforeStartingConnection()
+    {
+        yield return VerifyPublicTrustLoading("valid", true);
+    }
+
+    [UnityTest]
+    public IEnumerator AutoConnect_InvalidPublicTrust_EndsSessionBeforeNetworkStart()
+    {
+        yield return VerifyPublicTrustLoading("invalid", false);
+    }
+
+    [UnityTest]
+    public IEnumerator AutoConnect_OversizedPublicTrust_EndsSessionBeforeNetworkStart()
+    {
+        yield return VerifyPublicTrustLoading("oversized", false);
+    }
+
+    private IEnumerator VerifyPublicTrustLoading(string content, bool shouldConnect)
+    {
+        string originalTrustPath = Environment.GetEnvironmentVariable("LIVEOPS_IDENTITY_TRUST_FILE");
+        string trustPath = Path.Combine(Path.GetTempPath(), "liveops public trust " + Guid.NewGuid() + ".json");
+        try
+        {
+            using (var signer = new System.Security.Cryptography.RSACryptoServiceProvider(2048))
+            {
+                var publicKey = signer.ExportParameters(false);
+                string validTrust = new JObject {
+                    ["issuer"] = "issuer", ["game_id"] = "game", ["environment"] = "test", ["content_version"] = "v1",
+                    ["max_lifetime_seconds"] = 60, ["clock_skew_seconds"] = 0,
+                    ["public_keys"] = new JArray(new JObject { ["key_id"] = "test", ["modulus"] = Convert.ToBase64String(publicKey.Modulus), ["exponent"] = Convert.ToBase64String(publicKey.Exponent) })
+                }.ToString();
+                File.WriteAllText(trustPath, content == "valid" ? validTrust : content == "oversized" ? new string('x', 16385) : "{}");
+            }
+            Environment.SetEnvironmentVariable("LIVEOPS_IDENTITY_TRUST_FILE", new Uri(trustPath).AbsoluteUri);
+            StartServer("{\"access\":\"sample-access\",\"refresh\":\"sample-refresh\",\"username\":\"Name\",\"player_id\":\"42\"}");
+            var bootstrap = CreateBootstrap(out TMP_InputField usernameInput, out Button playButton, out TMP_Text statusLabel);
+            yield return null;
+            usernameInput.text = "Name";
+            passwordInput.text = "password";
+            playButton.onClick.Invoke();
+            float deadline = Time.realtimeSinceStartup + 5;
+            while (!bootstrap.IsAuthenticated && Time.realtimeSinceStartup < deadline) yield return null;
+            Assert.That(bootstrap.IsAuthenticated, Is.True, statusLabel.text);
+            var manager = CreateNetworkManager();
+            var autoConnect = networkObject.AddComponent<AutoConnect>();
+            var settings = new SerializedObject(autoConnect);
+            settings.FindProperty("authBootstrap").objectReferenceValue = bootstrap;
+            settings.FindProperty("connectionTimeout").floatValue = 5f;
+            settings.ApplyModifiedPropertiesWithoutUndo();
+            deadline = Time.realtimeSinceStartup + 3;
+            while (!manager.IsClient && bootstrap.IsAuthenticated && Time.realtimeSinceStartup < deadline) yield return null;
+            Assert.That(manager.IsClient, Is.EqualTo(shouldConnect), statusLabel.text);
+            Assert.That(bootstrap.IsAuthenticated, Is.EqualTo(shouldConnect));
+            if (!shouldConnect) StringAssert.Contains("Identity configuration error", statusLabel.text);
+        }
+        finally
+        {
+            Environment.SetEnvironmentVariable("LIVEOPS_IDENTITY_TRUST_FILE", originalTrustPath);
+            File.Delete(trustPath);
+        }
+    }
+
     private IEnumerator VerifyAutoConnectCancellation(bool shouldWaitForFallback, bool shouldDisableConnection = false)
     {
         StartServer("{\"access\":\"sample-access\",\"refresh\":\"sample-refresh\",\"username\":\"Name\",\"player_id\":\"42\"}");

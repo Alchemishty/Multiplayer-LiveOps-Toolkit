@@ -14,6 +14,12 @@ The complete playable multiplayer demo: Django username/password login, wallet/c
 
 The backend is a separately hosted sample, not a process installed or started by the Unity package. Source repository: https://github.com/Alchemishty/Multiplayer-LiveOps-Toolkit.
 
+## Android builds
+
+Full Demo runs on the verified Android 13 ARM64 emulator configuration with Unity 2022.3.33f1, IL2CPP and OpenGL ES 3. Follow [Android setup and build](https://github.com/Alchemishty/Multiplayer-LiveOps-Toolkit/blob/main/Documentation/android.md) for SDK/emulator setup, backend TCP forwarding, public trust, APK settings and desktop multiplayer.
+
+Touch account/shop/equipment UI is verified in landscape; supply your own mobile movement/camera controls. Physical devices and Unity 6 Android remain unqualified.
+
 ## Customize
 
 Use the saved scene, prefabs and catalogs directly. Replace character/cosmetic art through the package's CosmeticVisualCatalog, renderer rig/slot bindings and animation controller; skinned replacements need compatible rigs. Replace the example views with your own UI through the service contracts. Keep credentials and private backend configuration out of sample assets.

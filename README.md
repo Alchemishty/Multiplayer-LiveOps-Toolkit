@@ -69,7 +69,7 @@ Account authority and gameplay authority are separate. The supplied movement is 
 ## Current support
 
 - **Unity:** 2022.3; developed and tested with 2022.3.33f1.
-- **Platforms:** desktop. Native build/execution checks currently cover macOS; Windows, Linux and Unity's dedicated-server build target remain unqualified.
+- **Platforms:** macOS desktop and Android builds. Android is verified on an ARM64 Android 13 emulator using Unity 2022.3.33f1, NGO 1.9.1, IL2CPP and OpenGL ES 3, including account mechanics, Android/desktop multiplayer and user-approved Full Demo visuals. Follow [Android setup and build](Documentation/android.md). Physical Android devices, Unity 6 Android, iOS, Windows, Linux and Unity's dedicated-server build target remain unqualified.
 - **Inventory:** cosmetic ownership. General item stacks, consumables and equipment stats are outside the current implementation.
 - **Backend:** Django is a reference implementation. Games choose their own hosting, database operations and additional economy policies.
 - **Availability:** terminal authentication/renewal and handshake failures disconnect. Immediate detection of an idle backend outage remains an open gap.
@@ -81,6 +81,8 @@ The support and limitations listed above describe the scope of v0.1.0.
 The Unity project is in **`Unity/`**. Add that folder to Unity Hub; the repository root holds the backend, documentation and development tooling.
 
 **Try the complete repository demo:** follow [Run the demo](Documentation/getting-started.md) to set up the backend, create accounts, configure public verification trust and run two instances.
+
+**Build and run on Android:** follow [Android setup](Documentation/android.md) for SDK/emulator installation, backend forwarding, public trust and APK build settings.
 
 **Install in a fresh Unity project:** choose the [`.unitypackage` download](https://github.com/Alchemishty/Multiplayer-LiveOps-Toolkit/releases) with its [import guide](Documentation/unitypackage.md), or use [Package Manager integration](Documentation/package-integration.md). Both formats include Full Demo and require the documented Unity dependencies/TMP Essentials.
 

@@ -8,6 +8,7 @@ To try the repository demo, follow the steps below. To use a fresh Unity project
 
 - Unity **2022.3.33f1** (see `Unity/ProjectSettings/ProjectVersion.txt`).
 - Python **3.11** for the backend, or Docker Compose.
+- For Android, install Unity Android Build Support and an ARM64 emulator; see [Android requirements](android.md#install-the-tools).
 - Git and Git LFS. Binary assets use LFS; Unity YAML and `.meta` files stay in ordinary Git.
 
 ## Clone
@@ -56,6 +57,10 @@ This starts the local development backend at `http://localhost:8000` and persist
 4. The first instance becomes a Netcode host after a connection timeout; additional instances connect to it. Run builds from Unity's Build Settings with ExampleScene enabled.
 
 The saved `Assets/Scenes/ExampleScene.unity` and its prefabs define the demo. Edit those assets directly; run `python3 tools/sync_full_demo.py` after demo changes to update the package sample. API requests default to `http://localhost:8000`; `ApiConfig.SetBaseUrl` supports an override. Username-only development login and development reset require `DEBUG=True`; the demo signs in through Django username/password authentication.
+
+## Build and run on Android
+
+Android builds are supported on the [verified ARM64 emulator configuration](android.md). Follow the [Android setup and build guide](android.md) after completing the backend, account and public-trust setup here. It covers Android Build Support/SDK/NDK/JDK, IL2CPP/ARM64/OpenGLES3 settings, APK installation, localhost backend forwarding and desktop multiplayer. The demo's movement/camera controls remain keyboard-based.
 
 ## Create a login account
 

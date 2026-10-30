@@ -44,6 +44,8 @@ The Django backend remains at `backend/` in the repository. See [backend operati
 
 Imported sample sources belong to the consuming game's Assets. Reimporting with overwrite replaces sample files; keep game customizations separately or use a deliberate merge. Ordinary package updates must not rewrite consumer-owned scenes or configuration. This preview check covers version/path reinstall and stable GUID bindings, not a guarantee about future API-breaking upgrades.
 
+Android builds are supported on the verified Unity 2022.3/ARM64 emulator configuration. After importing Full Demo, follow [Android setup and build](android.md). Unity 6 Android and physical devices remain separate qualification work.
+
 ## Verification
 
 Run `python3 tools/test_package_layout.py` for layout/dependency/source-boundary checks. Run `python3 tools/verify_package_consumer.py` with an installed macOS Unity 2022.3.33f1 and backend/.venv for a fresh-project qualification. It creates isolated package copies/project, imports without TMP, runs portable EditMode tests, upgrades a local preview copy while comparing consumer scene/file bytes, imports the sample through Unity's sample API and builds actual SDK/UI native consumers. Django uses an isolated temporary database and ephemeral credentials. The sample is imported using Unity's Package Manager sample API; no direct copy of the source repository Assets is used. Evidence remains under the printed temporary directory; the database is removed.

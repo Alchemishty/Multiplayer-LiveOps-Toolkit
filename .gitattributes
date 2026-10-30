@@ -23,3 +23,5 @@
 *.ttf filter=lfs diff=lfs merge=lfs -text
 *.otf filter=lfs diff=lfs merge=lfs -text
 *.unitypackage filter=lfs diff=lfs merge=lfs -text
+# Unity lighting data is binary even when other .asset files use YAML.
+**/LightingData.asset -text

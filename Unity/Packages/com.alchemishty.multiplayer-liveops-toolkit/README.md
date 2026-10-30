@@ -12,4 +12,6 @@ Demo art is confined to the optional sample; see [third-party notices](Samples~/
 
 [Full Demo setup](Samples~/FullDemo/README.md) describes importing the complete playable example. [Avatar integration](Documentation~/full-demo.md) covers the reusable package pieces.
 
+Android ARM64 builds are verified with Unity 2022.3.33f1, NGO 1.9.1, IL2CPP and OpenGL ES 3 on an Android 13 emulator, including account mechanics and desktop multiplayer. See [Android setup and build](https://github.com/Alchemishty/Multiplayer-LiveOps-Toolkit/blob/main/Documentation/android.md). Physical devices, Unity 6 Android and iOS remain unqualified.
+
 Toolkit code is licensed under [MIT](LICENSE.md). Demo art and dependencies retain their own licenses.

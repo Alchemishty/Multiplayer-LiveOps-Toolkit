@@ -62,7 +62,7 @@ Add the package name to the project's `testables` and install Test Framework 1.3
 
 The repository's `tools/verify_package_consumer.py` exercises a fresh project without TMP, portable tests, a local preview-version update preserving consumer scene/file bytes, and native SDK/custom UI consumers against isolated Django. This qualifies the current installation/update flow; future API-breaking upgrades need explicit migration guidance. Never edit installed package source to configure a game. Imported Samples belong in consumer Assets; reimport with overwrite can replace sample customizations.
 
-Additional platform and security qualification remains pending. Unity 6 and non-cosmetic inventory are outside this preview.
+Platform execution is verified on macOS desktop and an Android 13 ARM64 emulator. Android uses Unity 2022.3.33f1/NGO 1.9.1, IL2CPP and OpenGL ES 3; account mechanics, Android/desktop multiplayer and Full Demo visuals were checked. See [Android setup and build](https://github.com/Alchemishty/Multiplayer-LiveOps-Toolkit/blob/main/Documentation/android.md). Physical Android, Unity 6 Android, iOS and other desktop operating systems remain unqualified. Additional platform and security qualification remains pending. Non-cosmetic inventory remains outside this preview. Additional Unity release lines require their own qualification.
 
 ## Optional visual customization
 

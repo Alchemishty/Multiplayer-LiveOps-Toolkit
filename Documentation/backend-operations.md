@@ -4,11 +4,13 @@ This Django backend demonstrates the toolkit mechanics. Games replace or extend 
 
 ## Local setup and migrations
 
-Follow [README](../README.md) for environment loading, Python dependencies, migrations, seed and admin-created accounts. `.env` is not loaded automatically by manage.py. Use an isolated `DB_PATH` for tests; never test migrations/reset against the only copy of player data. Back up an existing database before applying migrations and retain a restore procedure. Apply committed migrations with `manage.py migrate --noinput`; do not generate migrations at server startup.
+Follow [Run the demo](getting-started.md) for environment loading, Python dependencies, migrations, seed and admin-created accounts. `.env` is not loaded automatically by manage.py. Use an isolated `DB_PATH` for tests; never test migrations/reset against the only copy of player data. Back up an existing database before applying migrations and retain a restore procedure. Apply committed migrations with `manage.py migrate --noinput`; do not generate migrations at server startup.
 
 The current schema includes equipment revision ordering and achievement claim state. Qualification creates a fresh database from the committed migrations. It does not certify migration of an arbitrary production database or rollback of newer player data.
 
 `manage.py seed` creates/updates sample content and replaces seeded price rows. It is repeatable for demo setup but is not a production content migration policy. The legacy `initial_data.json` fixture does not represent the current schema. Local SQLite should use `runserver --nothreading` to avoid overlapping first-login write-lock upgrades.
+
+For a local Android build, keep Django on the development computer and use the [Android backend/forwarding setup](android.md#configure-the-backend-and-public-trust). The APK bundles exported public trust only; it does not contain the backend or private signing key. A remote backend must use HTTPS for player credential requests.
 
 ## Content authoring
 

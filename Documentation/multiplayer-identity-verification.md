@@ -89,7 +89,7 @@ A valid proof consumes the pending challenge and binds identity once. Invalid, e
 
 The sample spawner runs only after verification. It withholds sample player visibility from unverified peers, reveals existing players after verification and initializes the new player's public ID/display name before spawning. Nameplate NetworkVariables permit server writes only. Game-specific replicated objects must use appropriate visibility rules too; the gate is not a universal firewall for arbitrary gameplay custom messages or pre-existing scene objects.
 
-Validated on Unity 2022.3/macOS with editor-hosted real Unity Transport tests and separate standalone processes against Django: host plus client, and headless server-role plus two clients. Windows and other server operating systems remain release qualification work. This slice does not establish backend-approved equipment or complete idle-backend health monitoring.
+Validated on Unity 2022.3/macOS with editor-hosted real Unity Transport tests and separate standalone processes against Django: host plus client, and headless server-role plus two clients. Android ARM64 emulator checks also passed Android client/desktop host, Android client/headless desktop server and Android host/desktop client roles, including signed equipment verification; see [Android setup](android.md). Windows and other server operating systems remain release qualification work. Complete idle-backend health monitoring remains an open gap.
 
 ## Equipment protocol v1 (implemented)
 
