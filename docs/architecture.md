@@ -90,6 +90,8 @@ DjangoPlayerSession is instance-owned, not a singleton. AvatarRegistry belongs t
 
 Movement and animation remain owner-authoritative. Equipment replication is server-written only after signed equipment verification; there is no client loadout RPC. The backend validates ownership and configured slot rules, while proofs bind the canonical revision and IDs to the verified peer/session/content policy.
 
+VerifiedPlayerSpawner reveals existing verified avatars to the newly verified peer before spawning its player. NGO 2 adds observer entries during player spawn without sending previously hidden players; checking visibility only afterward can therefore omit existing players. The ordering works with both NGO 1.9 and the qualified NGO 2.13.3.
+
 Equipment and Achievements use explicit-session commands without automatic mutation retry. Achievements accepts backend-confirmed progress only. The sample backend advances purchase/spend counters inside successful Shop transactions and derives collections/recorded attendance from backend state. Claims grant rewards once using a locked progress row and one claimed flag. Unknown responses require a read refresh.
 
 ## Modular Core: implemented foundation

@@ -37,7 +37,7 @@ Run both `EditModeTests` and `MultiplayerLiveOpsToolkit.Tests.EditMode`, and bot
 
 From the repository root, run `python3 tools/test_package_layout.py` and `python3 tools/sync_full_demo.py --check`. Backend checks run from backend/ using `.venv/bin/python`: `manage.py check`, `manage.py makemigrations --check --dry-run` and `manage.py test shop`. Fresh package/native qualification uses tools/verify_package_consumer.py and tools/verify_netcode_consumer.py when installation or integration changes require it.
 
-Test counts below describe recorded runs, not a new verification of the current checkout. The last recorded full root Unity run is 267 EditMode / 146 PlayMode after the Unity directory relocation; backend mechanics last recorded 103 Django tests. Current support limits are maintained in the [README](../README.md#current-support).
+Test counts below describe recorded runs, not a new verification of the current checkout. The latest Unity 6 qualification records 267 EditMode / 149 PlayMode, with 149 PlayMode also passing on Unity 2022.3; the backend run records 104 Django tests. See the Unity 6.3 LTS qualification entry below. Current support limits are maintained in the [README](../README.md#current-support).
 
 Unity Test Framework can leave `Assets/InitTestScene*.unity` after interrupted runs. These generated scenes are ignored and can be deleted with their `.meta` files once no tests are running. Keep screenshots outside `Assets/` to avoid importing diagnostic images as game assets.
 
@@ -244,3 +244,25 @@ Clean consumer passed **212 portable EditMode tests**, import without TMP, local
 ## Unity project directory relocation (2026-10-26)
 
 Moved the Unity project and its local generated state into repository `Unity/`. Assets, package metadata/GUIDs and runtime code remain unchanged. Repository backend/tools stay at root; source paths, ignores, CI triggers, harness launch paths and documentation links were updated. The new layout regression failed before the move; after relocation **8 Python layout checks, 267 EditMode and 146 PlayMode tests passed** using the main project at its new path. Shell syntax checks and local Markdown link checks passed; fresh-context review found no relocation issues. No temporary Unity project was created for this verification.
+
+## Unity 6.3 LTS qualification (2026-10-30)
+
+Qualified macOS Apple Silicon with Unity **6000.3.27f1**, NGO **2.13.3**, Transport **2.7.4**, Collections **2.7.1**, Newtonsoft JSON **3.2.2**, Test Framework **1.6.0** and uGUI **2.0.0** (bundled TMP). The repository project remains on Unity 2022.3.33f1.
+
+Full isolated Unity 6 regression: **267 EditMode / 149 PlayMode passed**, zero skipped. The current **149 PlayMode** cases also passed in an isolated Unity 2022.3.33f1 copy with NGO 1.9.1. Django's **104 tests** passed. **11 Python layout/distribution checks** and sample synchronization checks pass.
+
+NGO 2 automatically adds existing player observers during a new player spawn. Revealing existing avatars afterward incorrectly skips their spawn messages. VerifiedPlayerSpawner now reveals them before spawning the new player. Existing signed-visibility and late-join/equipment tests reproduce the failure and pass after the ordering fix. Netcode fixtures now use real serialized prefab assets and the actual cosmetic renderer, preserving coverage of updates, late joins, respawn and rejection without runtime-generated network prefab hashes. Host-fallback cancellation is synchronized to the client-stopped event with a separate shutdown deadline.
+
+Final fresh UPM consumer passed **212 portable EditMode cases**, an SDK build without UI, upgrade preservation of consumer-owned files, Unity 6 TMP Essentials/Full Demo import, strict macOS Full Demo build and native SDK operations against isolated Django. The original package digest stayed unchanged during qualification. Evidence: `/Volumes/Samsung T7/Unity/Qualification/Unity6Final/liveops-package-consumer-6bd_i9tr`; summary: `unity6-final-consumer.log` in the qualification directory.
+
+Independent native host/client and headless server/client probes passed signed identity/equipment, avatar/preview/publication and private teardown. The joining client explicitly verifies the existing host avatar and name. Initial evidence: `/Volumes/Samsung T7/Unity/Qualification/Unity6Netcode/liveops-release-netcode-3oqfc5pq`.
+
+Regression evidence is retained under `/Volumes/Samsung T7/Unity/Qualification/`: `unity6-editmode.xml`, `unity6-playmode.xml`, `unity2022-playmode.xml` and matching editor logs. Unity 6 regression presentation tests use a graphics device and freshly imported Unity 6 TMP Essentials. The repository Unity MCP refresh timed out and console access reported no session; independent batch editor compilation, test results and native builds provide the compiler/runtime evidence.
+
+The demo has an existing TMP `enableWordWrapping` deprecation warning on Unity 6; it does not produce a C# compilation error. Additional Unity releases, render pipelines and OS/build targets require separate qualification. See [Unity 6 setup](../Documentation/unity6.md).
+
+Final native extension also passed owner-authoritative position and Animator parameter replication in both host/client and headless server/client sessions, using the package ClientNetworkTransform/ClientNetworkAnimator with an explicitly bound Animator. Final evidence: `/Volumes/Samsung T7/Unity/Qualification/Unity6NetcodeFinal/liveops-release-netcode-4tis6v78`; summary: `unity6-native-netcode-final.log`.
+
+Classic `.unitypackage` qualification passed editor-matched TMP Essentials import, export content/GUID validation, real Unity reimport, missing-script checks and strict macOS build. Artifact: `/Volumes/Samsung T7/Unity/Distribution/MultiplayerLiveOpsToolkit-0.1.0-Unity6.unitypackage`, with SHA-256 sidecar and `verification/` logs. The disposable export/import project was removed. This checks the imported saved Full Demo build; manual two-player acceptance of the full demo UI is separate from the instrumented SDK/native checks above.
+
+Clean user-facing project: `/Volumes/Samsung T7/Unity/Projects/MultiplayerLiveOpsToolkit-Unity6`, with an embedded current package, imported Full Demo/TMP Essentials, legacy Input Manager and no account credentials/private signing key. Backend/account/public trust setup remains an explicit consumer configuration step.

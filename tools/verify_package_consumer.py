@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
-"""Qualify the local UPM package in a fresh, isolated Unity 2022.3 project.
+"""Qualify the local UPM package in a fresh, isolated Unity consumer project.
 
-Requires installed macOS Unity 2022.3.33f1 and backend/.venv. Does not publish,
+Requires an installed macOS Unity editor and backend/.venv. Does not publish,
 modify the toolkit package, or copy repository Assets directly. Imports the packaged Full Demo and retains evidence under /tmp.
 """
 import argparse
@@ -33,11 +33,21 @@ def verify_preserved_file(path, expected):
         raise RuntimeError('Upgrade lost or modified consumer-owned file: ' + str(path))
 
 
+def sample_dependencies(editor_version):
+    """Unity 6 bundles TextMeshPro in uGUI; 2022 uses separate packages."""
+    if int(editor_version.split(".")[0]) >= 6000:
+        return {"com.unity.ugui": "2.0.0"}
+    return {"com.unity.textmeshpro": "3.0.6", "com.unity.ugui": "1.0.0"}
+
+
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument('--unity', type=Path, default=Path('/Applications/Unity/Hub/Editor/2022.3.33f1/Unity.app/Contents/MacOS/Unity'))
+    parser.add_argument("--evidence-root", type=Path, help="Retain the project, builds and logs on this volume.")
     args = parser.parse_args()
-    state = Path(tempfile.mkdtemp(prefix='liveops-package-consumer-'))
+    if args.evidence_root:
+        args.evidence_root.mkdir(parents=True, exist_ok=True)
+    state = Path(tempfile.mkdtemp(prefix="liveops-package-consumer-", dir=args.evidence_root))
     print('Evidence: ' + str(state), flush=True)
     source_digest = digest(PACKAGE)
     project = state / 'Project'
@@ -53,10 +63,12 @@ def main():
             raise RuntimeError(f'{label} failed ({result.returncode}); inspect {state / (label + ".log")}')
 
     unity('create-project', '-createProject', str(project), '-quit')
+    editor_version = (project / 'ProjectSettings/ProjectVersion.txt').read_text().split('m_EditorVersion: ', 1)[1].splitlines()[0]
+    print('Editor: ' + editor_version, flush=True)
     manifests = project / 'Packages/manifest.json'
     # Engine modules are Unity's built-ins; no TMP, demo, editor plugin or toolkit source in Assets.
     dependencies = {name: version for name, version in json.loads((UNITY_PROJECT / 'Packages/manifest.json').read_text())['dependencies'].items() if name.startswith('com.unity.modules.')}
-    dependencies['com.unity.test-framework'] = '1.3.9'
+    dependencies['com.unity.test-framework'] = '1.6.0' if int(editor_version.split('.')[0]) >= 6000 else '1.3.9'
     package_v1 = state / 'package-v1'; shutil.copytree(PACKAGE, package_v1)
     dependencies[PACKAGE.name] = 'file:' + str(package_v1)
 
@@ -84,7 +96,7 @@ def main():
     unity('upgrade-build-sdk', '-projectPath', str(project), '-executeMethod', 'ToolkitConsumerBuild.BuildExistingSdk', '-quit')
     for path, expected in preserved_files.items():
         verify_preserved_file(path, expected)
-    dependencies['com.unity.textmeshpro'] = '3.0.6'; dependencies['com.unity.ugui'] = '1.0.0'; write_manifest()
+    dependencies.update(sample_dependencies(editor_version)); write_manifest()
     unity('import-full-demo', '-projectPath', str(project), '-executeMethod', 'ToolkitConsumerBuild.ImportSample')
     environment['SMOKE_BUILD'] = str(state / 'demo/ToolkitConsumer.app')
     unity('build-full-demo', '-projectPath', str(project), '-executeMethod', 'ToolkitConsumerBuild.BuildFullDemo', '-quit')

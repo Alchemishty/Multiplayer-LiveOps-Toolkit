@@ -1,5 +1,6 @@
 using System;
 using System.IO;
+using System.Linq;
 using UnityEditor;
 using UnityEditor.Build.Reporting;
 using UnityEditor.SceneManagement;
@@ -8,6 +9,21 @@ using UnityEngine;
 public static class UnityPackageBuild
 {
     private const string ROOT = "Assets/MultiplayerLiveOpsToolkit";
+
+    public static void ImportEssentials()
+    {
+        var package = UnityEditor.PackageManager.PackageInfo.GetAllRegisteredPackages().Single(entry => entry.name ==
+#if UNITY_6000_0_OR_NEWER
+            "com.unity.ugui"
+#else
+            "com.unity.textmeshpro"
+#endif
+        );
+        AssetDatabase.importPackageCompleted += name => EditorApplication.Exit(File.Exists("Assets/TextMesh Pro/Resources/TMP Settings.asset") ? 0 : 1);
+        AssetDatabase.importPackageFailed += (name, error) => { Debug.LogError(error); EditorApplication.Exit(1); };
+        AssetDatabase.importPackageCancelled += name => EditorApplication.Exit(1);
+        AssetDatabase.ImportPackage(Path.Combine(package.resolvedPath, "Package Resources/TMP Essential Resources.unitypackage"), false);
+    }
 
     public static void Export()
     {

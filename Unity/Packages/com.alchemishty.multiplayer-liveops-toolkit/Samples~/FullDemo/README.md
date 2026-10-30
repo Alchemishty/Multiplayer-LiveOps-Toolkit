@@ -2,9 +2,9 @@
 
 The complete playable multiplayer demo: Django username/password login, wallet/conversion, categorized shop and sets, inventory, local preview, equipment, achievements/toasts, daily rewards and development reset. It includes the authored modular character, animated movement, cosmetic prefabs, visual catalogs and TMP UI. Reusable mechanics/avatar/rendering/control code comes from the toolkit runtime.
 
-## Setup in Unity 2022.3
+## Setup in Unity 2022.3 or Unity 6.3 LTS
 
-1. Use a Built-in Render Pipeline project. Install TextMeshPro **3.0.6** and uGUI **1.0.0**.
+1. Use a Built-in Render Pipeline project. On Unity 2022.3, install TextMeshPro **3.0.6** and uGUI **1.0.0**. On Unity 6.3, use uGUI **2.0.0**, which includes TextMeshPro, without the separate TextMeshPro package. Enable **Input Manager (Old)** or **Both** under Active Input Handling for the supplied character controls.
 2. Import **Window > TextMeshPro > Import TMP Essential Resources**.
 3. For UPM, import **Full Demo** from Package Manager > Multiplayer LiveOps Toolkit > Samples. For the classic `.unitypackage`, Full Demo is already included under `Assets/MultiplayerLiveOpsToolkit/FullDemo/`.
 4. Open **Scenes/ExampleScene.unity** inside the imported Full Demo folder. Add this scene to Build Settings when making a player.

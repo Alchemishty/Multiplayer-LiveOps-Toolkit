@@ -14,6 +14,13 @@ PACKAGE = UNITY_PROJECT / 'Packages/com.alchemishty.multiplayer-liveops-toolkit'
 
 
 class PackageLayoutTests(unittest.TestCase):
+    def test_full_demo_dependencies_follow_editor_ui_packaging(self):
+        self.assertEqual(verify_package_consumer.sample_dependencies('2022.3.33f1'),
+                         {'com.unity.textmeshpro': '3.0.6', 'com.unity.ugui': '1.0.0'})
+        for version in ['6000.0.1f1', '6000.3.27f1']:
+            self.assertEqual(verify_package_consumer.sample_dependencies(version),
+                             {'com.unity.ugui': '2.0.0'})
+
     def test_unitypackage_documentation_links_use_classic_layout(self):
         source = PACKAGE / 'Documentation~/full-demo.md'
         content = build_unitypackage.export_content(Path('Documentation/full-demo.md'), source)

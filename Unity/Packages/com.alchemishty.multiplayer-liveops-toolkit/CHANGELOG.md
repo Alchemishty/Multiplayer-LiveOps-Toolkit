@@ -2,6 +2,9 @@
 
 ## 0.1.0
 
+- Qualify Unity 6.3 LTS 6000.3.27f1 with NGO 2.13.3; reveal existing verified avatars before spawning a new player so late joiners receive them on NGO 2.
+- Document Unity 6 bundled TextMeshPro/uGUI setup while retaining the Unity 2022.3 minimum.
+
 - Extract existing engine-free mechanics into one UPM package, preserving source metadata.
 - Separate UnityIntegration, Backends.Django and Netcode assemblies and public namespaces.
 - Require explicit Django renewal endpoints; consuming-game preferences are untouched.

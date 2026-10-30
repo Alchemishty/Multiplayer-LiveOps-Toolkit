@@ -28,10 +28,13 @@ public class NetcodeIdentityGateTests
     private NetcodeIdentityGate gate;
     private RSACryptoServiceProvider signer;
     private IdentityProofVerifier verifier;
+    private string prefabAssetFolder;
 
     [SetUp]
     public void SetUp()
     {
+        prefabAssetFolder = "Assets/LiveOpsNetcodeTests-" + Guid.NewGuid().ToString("N");
+        UnityEditor.AssetDatabase.CreateFolder("Assets", prefabAssetFolder.Substring("Assets/".Length));
         lastFailure = "";
         signer = new RSACryptoServiceProvider(2048) { PersistKeyInCsp = false };
         verifier = new IdentityProofVerifier(new Dictionary<string, RSAParameters> { { "test", signer.ExportParameters(false) } },
@@ -56,6 +59,7 @@ public class NetcodeIdentityGateTests
         gate.LocalFailure -= CaptureFailure;
         Object.DestroyImmediate(managerObject);
         signer.Dispose();
+        UnityEditor.AssetDatabase.DeleteAsset(prefabAssetFolder);
     }
 
     [UnityTest]
@@ -189,6 +193,7 @@ public class NetcodeIdentityGateTests
     public IEnumerator VerifiedHost_SpawnsPlayerWithServerOwnedIdentity()
     {
         var prefab = CreatePlayerTemplate();
+        prefab = SavePlayerTemplate(prefab);
         manager.NetworkConfig.PlayerPrefab = prefab;
         var spawner = managerObject.AddComponent<VerifiedPlayerSpawner>();
         try
@@ -203,7 +208,7 @@ public class NetcodeIdentityGateTests
             Assert.That(spawned.Username.Value.ToString(), Is.EqualTo("Backend player"));
             Assert.That(spawned.Username.WritePerm, Is.EqualTo(NetworkVariableWritePermission.Server));
         }
-        finally { Object.DestroyImmediate(prefab); }
+        finally { manager.Shutdown(); }
     }
 
     [UnityTest]
@@ -211,6 +216,7 @@ public class NetcodeIdentityGateTests
     {
         var clientGate = CreateRemoteClient();
         var prefab = CreatePlayerTemplate();
+        prefab = SavePlayerTemplate(prefab);
         manager.NetworkConfig.PlayerPrefab = prefab;
         client.NetworkConfig.PlayerPrefab = prefab;
         managerObject.AddComponent<VerifiedPlayerSpawner>();
@@ -231,10 +237,10 @@ public class NetcodeIdentityGateTests
             remoteBackend.ShouldWait = false;
             while ((!clientGate.IsLocalVerified || client.SpawnManager.SpawnedObjects.Count != 2) && Time.realtimeSinceStartup < deadline) yield return null;
             Assert.That(clientGate.IsLocalVerified, Is.True, lastFailure);
-            Assert.That(client.SpawnManager.SpawnedObjects.Count, Is.EqualTo(2));
+            Assert.That(client.SpawnManager.SpawnedObjects.Count, Is.EqualTo(2), $"Server objects: {manager.SpawnManager.SpawnedObjects.Count}; host visible: {hostPlayer.IsNetworkVisibleTo(client.LocalClientId)}; client verified: {clientGate.IsLocalVerified}; failure: {lastFailure}");
             Assert.That(client.LocalClient.PlayerObject.GetComponent<PlayerNameplate>().Username.Value.ToString(), Is.EqualTo("Backend player"));
         }
-        finally { Object.DestroyImmediate(prefab); }
+        finally { manager.Shutdown(); }
     }
 
     private GameObject CreatePlayerTemplate()
@@ -248,6 +254,16 @@ public class NetcodeIdentityGateTests
         serialized.FindProperty("nameplateLabel").objectReferenceValue = label;
         serialized.ApplyModifiedPropertiesWithoutUndo();
         typeof(NetworkObject).GetProperty("IsSceneObject").SetValue(prefab.GetComponent<NetworkObject>(), false);
+        return prefab;
+    }
+
+    private GameObject SavePlayerTemplate(GameObject source)
+    {
+        var renderer = source.GetComponent<CosmeticRenderer>();
+        if (renderer != null && renderer.catalog != null && !UnityEditor.AssetDatabase.Contains(renderer.catalog))
+            UnityEditor.AssetDatabase.CreateAsset(renderer.catalog, prefabAssetFolder + "/VisualCatalog.asset");
+        var prefab = UnityEditor.PrefabUtility.SaveAsPrefabAsset(source, prefabAssetFolder + "/Player.prefab");
+        Object.DestroyImmediate(source);
         return prefab;
     }
 
@@ -381,6 +397,7 @@ public class NetcodeIdentityGateTests
     {
         var prefab = CreatePlayerTemplate();
         prefab.AddComponent<PlayerAccessory>();
+        prefab = SavePlayerTemplate(prefab);
         manager.NetworkConfig.PlayerPrefab = prefab;
         managerObject.AddComponent<VerifiedPlayerSpawner>();
         try
@@ -392,7 +409,7 @@ public class NetcodeIdentityGateTests
             Assert.That(manager.LocalClient.PlayerObject, Is.Not.Null);
             yield return null;
         }
-        finally { Object.DestroyImmediate(prefab); }
+        finally { manager.Shutdown(); }
     }
     [UnityTest]
     public IEnumerator DedicatedEquipment_ReplicatesUpdatesLateJoinRespawnAndDisconnect()
@@ -400,18 +417,17 @@ public class NetcodeIdentityGateTests
         var clientGate = CreateRemoteClient();
         var hat = new GameObject("Equipment test hat");
         var crown = new GameObject("Equipment test crown");
-        var catalog = ScriptableObject.CreateInstance<AccessorySO>();
-        catalog.accessories = new[] { new AccessoryItemData { itemId = 1, accessoryType = AccessoryType.Headwear, prefab = hat }, new AccessoryItemData { itemId = 2, accessoryType = AccessoryType.Headwear, prefab = crown } };
-        var registryObject = new GameObject("Equipment test mappings");
-        registryObject.SetActive(false);
-        var registry = registryObject.AddComponent<AccessoryRegistry>();
-        var registryFields = new UnityEditor.SerializedObject(registry);
-        registryFields.FindProperty("masterCatalogSO").objectReferenceValue = catalog;
-        registryFields.ApplyModifiedPropertiesWithoutUndo();
-        registryObject.SetActive(true);
+        var catalog = ScriptableObject.CreateInstance<CosmeticVisualCatalog>();
+        catalog.cosmetics = new[] {
+            new CosmeticVisualDefinition { itemId = "1", slotId = "headwear", prefab = UnityEditor.PrefabUtility.SaveAsPrefabAsset(hat, prefabAssetFolder + "/Hat.prefab") },
+            new CosmeticVisualDefinition { itemId = "2", slotId = "headwear", prefab = UnityEditor.PrefabUtility.SaveAsPrefabAsset(crown, prefabAssetFolder + "/Crown.prefab") }
+        };
         var prefab = CreatePlayerTemplate();
         prefab.AddComponent<PlayerAccessory>();
-        prefab.AddComponent<EquipmentVisualTestDouble>();
+        var renderer = prefab.AddComponent<CosmeticRenderer>();
+        renderer.catalog = catalog;
+        renderer.slots = new[] { new CosmeticSlotBinding { slotId = "headwear", attachment = prefab.transform } };
+        prefab = SavePlayerTemplate(prefab);
         manager.NetworkConfig.PlayerPrefab = prefab;
         manager.AddNetworkPrefab(prefab); client.AddNetworkPrefab(prefab);
         managerObject.AddComponent<VerifiedPlayerSpawner>();
@@ -430,11 +446,11 @@ public class NetcodeIdentityGateTests
             ulong firstPeer = client.LocalClientId;
             var firstPlayer = client.LocalClient.PlayerObject;
             Assert.That(EquipmentPublicState.Parse(firstPlayer.GetComponent<PlayerAccessory>().AccessoryJson.Value.Json).ItemsBySlot["headwear"], Is.EqualTo("1"));
-            Assert.That(firstPlayer.GetComponent<EquipmentVisualTestDouble>().GetActiveItemId(AccessoryType.Headwear), Is.EqualTo(1));
+            Assert.That(firstPlayer.transform.Find("Cosmetic_1").gameObject.activeSelf, Is.True);
             equipmentBackend.Revision = 2; equipmentBackend.ItemId = "2";
             clientGate.RequestEquipmentPublication();
             while (EquipmentPublicState.Parse(firstPlayer.GetComponent<PlayerAccessory>().AccessoryJson.Value.Json).Revision != 2 && Time.realtimeSinceStartup < deadline) yield return null;
-            Assert.That(firstPlayer.GetComponent<EquipmentVisualTestDouble>().GetActiveItemId(AccessoryType.Headwear), Is.EqualTo(2));
+            Assert.That(firstPlayer.transform.Find("Cosmetic_2").gameObject.activeSelf, Is.True);
 
             lateObject = new GameObject("Late equipment observer");
             lateManager = lateObject.AddComponent<NetworkManager>();
@@ -473,7 +489,7 @@ public class NetcodeIdentityGateTests
             if (lateManager != null) lateManager.Shutdown();
             manager.Shutdown(); client.Shutdown();
             if (lateObject != null) Object.DestroyImmediate(lateObject);
-            Object.DestroyImmediate(prefab); Object.DestroyImmediate(registryObject); Object.DestroyImmediate(catalog); Object.DestroyImmediate(hat); Object.DestroyImmediate(crown);
+            Object.DestroyImmediate(hat); Object.DestroyImmediate(crown);
         }
     }
     [UnityTest]
@@ -484,6 +500,7 @@ public class NetcodeIdentityGateTests
         var renderer = prefab.AddComponent<CosmeticRenderer>();
         renderer.catalog = catalog;
         renderer.slots = new[] { new CosmeticSlotBinding { slotId = "headwear", attachment = prefab.transform } };
+        prefab = SavePlayerTemplate(prefab);
         manager.NetworkConfig.PlayerPrefab = prefab; manager.AddNetworkPrefab(prefab);
         managerObject.AddComponent<VerifiedPlayerSpawner>();
         gate.ConfigureEquipment(new EquipmentProofVerifier(verifier), new EquipmentSigningBackend(signer));
@@ -496,7 +513,7 @@ public class NetcodeIdentityGateTests
             while (manager.IsListening && Time.realtimeSinceStartup < deadline) yield return null;
             Assert.That(manager.IsListening, Is.False);
         }
-        finally { manager.Shutdown(); Object.DestroyImmediate(prefab); Object.DestroyImmediate(catalog); }
+        finally { manager.Shutdown(); }
     }
     [UnityTest]
     public IEnumerator EquipmentRequiredClient_RejectsIdentityOnlyServer()

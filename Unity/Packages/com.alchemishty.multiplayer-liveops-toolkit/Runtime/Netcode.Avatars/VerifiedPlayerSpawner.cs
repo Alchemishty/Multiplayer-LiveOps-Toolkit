@@ -42,11 +42,12 @@ public sealed class VerifiedPlayerSpawner : MonoBehaviour
             player.SetActive(true);
             var playerNetworkObject = player.GetComponent<NetworkObject>();
             playerNetworkObject.CheckObjectVisibility = IsVerifiedObserver;
-            playerNetworkObject.SpawnAsPlayerObject(peerId, true);
-            // The newly verified peer can now see existing verified players as well.
+            // Reveal existing players before spawning: NGO 2 adds player observers during spawn
+            // without sending objects that were hidden during connection approval.
             foreach (var existing in manager.SpawnManager.SpawnedObjectsList)
                 if (existing != playerNetworkObject && existing.GetComponent<NetworkPlayerIdentity>() != null && !existing.IsNetworkVisibleTo(peerId))
                     existing.NetworkShow(peerId);
+            playerNetworkObject.SpawnAsPlayerObject(peerId, true);
         }
         catch
         {

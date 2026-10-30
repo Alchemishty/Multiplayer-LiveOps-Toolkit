@@ -4,6 +4,8 @@ The repository demo and the package's Full Demo sample use the same toolkit runt
 
 To try the repository demo, follow the steps below. To use a fresh Unity project, follow [package installation and Full Demo import](package-integration.md#import-the-full-demo), with the same backend/account/public-trust setup. The imported scene is under the sample folder rather than the repository's Unity/Assets/Scenes folder.
 
+For a separate Unity 6 consumer project, follow [Unity 6 setup](unity6.md). The repository demo below retains its Unity 2022.3 baseline.
+
 ## Requirements
 
 - Unity **2022.3.33f1** (see `Unity/ProjectSettings/ProjectVersion.txt`).

@@ -26,11 +26,15 @@ UNITY = '/Applications/Unity/Hub/Editor/2022.3.33f1/Unity.app/Contents/MacOS/Uni
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument('--project', required=True, type=Path)
+    parser.add_argument('--unity', type=Path, default=Path(UNITY))
+    parser.add_argument('--evidence-root', type=Path)
     args = parser.parse_args()
+    if args.evidence_root:
+        args.evidence_root.mkdir(parents=True, exist_ok=True)
     project = args.project.resolve()
     if not (project / 'Assets/ConsumerOwned.txt').is_file():
         raise RuntimeError('Use only the disposable project created by verify_package_consumer.py.')
-    state = Path(tempfile.mkdtemp(prefix='liveops-release-netcode-'))
+    state = Path(tempfile.mkdtemp(prefix='liveops-release-netcode-', dir=args.evidence_root))
     print('Evidence: ' + str(state), flush=True)
     # Use a new copy of CURRENT source, rather than trusting an earlier cached binary.
     package = UNITY_PROJECT / 'Packages/com.alchemishty.multiplayer-liveops-toolkit'
@@ -43,7 +47,7 @@ def main():
     shutil.copy2(ROOT / 'tools/consumer/ToolkitConsumerBuild.cs', project / 'Assets/Editor')
     environment = os.environ.copy()
     environment['SMOKE_BUILD'] = str(state / 'NetcodeConsumer.app')
-    subprocess.run([UNITY, '-batchmode', '-nographics', '-projectPath', str(project), '-executeMethod', 'ToolkitConsumerBuild.BuildNetcode', '-quit', '-logFile', str(state / 'build.log')], env=environment, check=True, timeout=600)
+    subprocess.run([str(args.unity), '-batchmode', '-nographics', '-projectPath', str(project), '-executeMethod', 'ToolkitConsumerBuild.BuildNetcode', '-quit', '-logFile', str(state / 'build.log')], env=environment, check=True, timeout=600)
     run_players(state, environment)
 
 
@@ -78,7 +82,7 @@ def run_players(state, environment):
             def launch(mode, prefix, port):
                 result = state / (prefix + mode + '.txt')
                 player_environment = environment.copy()
-                player_environment.update(SMOKE_MODE=mode, SMOKE_USER='release-client' if mode == 'client' else 'release-host', SMOKE_PORT=str(port), SMOKE_PREFIX=str(state / prefix), SMOKE_RESULT=str(result))
+                player_environment.update(SMOKE_EXPECT_HOST='1' if prefix == 'host-' else '0', SMOKE_MODE=mode, SMOKE_USER='release-client' if mode == 'client' else 'release-host', SMOKE_PORT=str(port), SMOKE_PREFIX=str(state / prefix), SMOKE_RESULT=str(result))
                 process = subprocess.Popen([binary, '-batchmode', '-nographics', '-logFile', str(state / (prefix + mode + '.log'))], env=player_environment, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
                 players.append(process)
                 return process, result

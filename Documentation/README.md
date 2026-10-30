@@ -4,6 +4,7 @@ These guides explain what the toolkit provides and how to use it. Start with the
 
 | Guide | What it covers |
 |---|---|
+| [Unity 6 setup](unity6.md) | Supported Unity version, fresh-project installation and required demo setup |
 | [Run the demo](getting-started.md) | Repository setup, backend/accounts, trust configuration and two-instance play |
 | [Android setup and build](android.md) | Verified Android support, emulator/tools, backend forwarding, APK build and multiplayer |
 | [Classic .unitypackage](unitypackage.md) | Release download, dependencies, import and building the distribution |

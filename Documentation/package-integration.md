@@ -1,6 +1,6 @@
 # Package integration
 
-The toolkit is now authored as one local UPM package at `Unity/Packages/com.alchemishty.multiplayer-liveops-toolkit`, version `0.1.0`, for Unity 2022.3. The existing game under Unity/Assets consumes that package; the backend stays at `backend/`. The Full Demo includes its art credits and license links.
+The toolkit is now authored as one local UPM package at `Unity/Packages/com.alchemishty.multiplayer-liveops-toolkit`, version `0.1.0`, with Unity 2022.3 as its minimum editor version and additional qualification on Unity 6.3 LTS 6000.3.27f1. The existing game under Unity/Assets consumes that package; the backend stays at `backend/`. The Full Demo includes its art credits and license links.
 
 ## Boundaries
 
@@ -38,7 +38,7 @@ Custom backends implement the mechanic I*Backend contracts and preserve authorit
 
 ## Import the Full Demo
 
-Install TextMeshPro 3.0.6 and uGUI 1.0.0 and import TMP Essentials through Window > TextMeshPro. In a fresh Unity 2022.3 Built-in Render Pipeline project, import **Full Demo** from Package Manager > Multiplayer LiveOps Toolkit > Samples. Open `Scenes/ExampleScene.unity` inside the imported sample, configure the reference backend and public proof trust, and press Play. The scene, character/cosmetics, visual catalogs and UI are already wired. No generator or minimal sample is shipped. Do not import the sample into this repository's Assets: it already contains the same scripts/GUIDs.
+On Unity 2022.3, install TextMeshPro 3.0.6 and uGUI 1.0.0. On Unity 6, install uGUI 2.0.0, which includes TextMeshPro; do not add the separate TextMeshPro package. Import TMP Essentials through Window > TextMeshPro. In a fresh Built-in Render Pipeline project, import **Full Demo** from Package Manager > Multiplayer LiveOps Toolkit > Samples. Open `Scenes/ExampleScene.unity` inside the imported sample, configure the reference backend and public proof trust, and press Play. The scene, character/cosmetics, visual catalogs and UI are already wired. No generator or minimal sample is shipped. Do not import the sample into this repository's Assets: it already contains the same scripts/GUIDs.
 
 The Django backend remains at `backend/` in the repository. See [backend operations](backend-operations.md) and [proof setup](multiplayer-identity-verification.md). Private signing keys and account credentials never belong in the sample. Configure public trust in `Assets/StreamingAssets/LiveOpsIdentityTrust.json` or with `LIVEOPS_IDENTITY_TRUST_FILE`.
 
@@ -48,7 +48,7 @@ Android builds are supported on the verified Unity 2022.3/ARM64 emulator configu
 
 ## Verification
 
-Run `python3 tools/test_package_layout.py` for layout/dependency/source-boundary checks. Run `python3 tools/verify_package_consumer.py` with an installed macOS Unity 2022.3.33f1 and backend/.venv for a fresh-project qualification. It creates isolated package copies/project, imports without TMP, runs portable EditMode tests, upgrades a local preview copy while comparing consumer scene/file bytes, imports the sample through Unity's sample API and builds actual SDK/UI native consumers. Django uses an isolated temporary database and ephemeral credentials. The sample is imported using Unity's Package Manager sample API; no direct copy of the source repository Assets is used. Evidence remains under the printed temporary directory; the database is removed.
+Run `python3 tools/test_package_layout.py` for layout/dependency/source-boundary checks. Run `python3 tools/verify_package_consumer.py` with an installed macOS Unity editor and backend/.venv (use `--unity` for Unity 6 and `--evidence-root` to retain projects/builds on a chosen volume) for a fresh-project qualification. It creates isolated package copies/project, imports without TMP, runs portable EditMode tests, upgrades a local preview copy while comparing consumer scene/file bytes, imports the sample through Unity's sample API and builds actual SDK/UI native consumers. Django uses an isolated temporary database and ephemeral credentials. The sample is imported using Unity's Package Manager sample API; no direct copy of the source repository Assets is used. Evidence remains under the printed temporary directory; the database is removed.
 
 Run root EditMode/PlayMode tests across both demo and package test assemblies after SDK changes. Keep the saved scene/prefabs as the full demo's composition source of truth. Windows, Asset Store packaging/licensing, final release security/platform checks and compatibility with future breaking API changes remain separate qualification work.
 
@@ -61,3 +61,5 @@ The package supplies [Equipment visuals](../Unity/Packages/com.alchemishty.multi
 The package now also supplies Netcode.Avatars (verified spawning/public identity/equipment/lifecycle and a session-local AvatarRegistry), CharacterControls (optional movement/animation/transform/camera) and DjangoPlayerModules (explicit UI-independent reference composition). The repository demo consumes these runtime classes. [Integration guide](../Unity/Packages/com.alchemishty.multiplayer-liveops-toolkit/Documentation~/full-demo.md) describes custom composition.
 
 The optional Full Demo sample ships the existing authored scene/art/UI instead of generating placeholder assets. After editing demo assets or scripts, run `python3 tools/sync_full_demo.py` and verify with `--check`. These are example asset copies with preserved GUIDs, not duplicated SDK runtime sources.
+
+See [Unity 6 setup](unity6.md) for the minimal fresh-project steps.

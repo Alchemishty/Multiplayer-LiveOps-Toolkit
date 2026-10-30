@@ -17,12 +17,18 @@ public static class ToolkitConsumerBuild
         const string path = "Assets/Scenes/Consumer.unity";
         if (!File.Exists(path)) throw new InvalidOperationException("Upgrade lost the consuming game's scene.");
         EditorSceneManager.OpenScene(path);
-        if (UnityEngine.Object.FindObjectOfType<PackageConsumer>() == null) throw new InvalidOperationException("Upgrade lost the consumer component binding.");
+        if (UnityEngine.Object.FindFirstObjectByType<PackageConsumer>() == null) throw new InvalidOperationException("Upgrade lost the consumer component binding.");
         BuildSavedScene();
     }
     public static void ImportSample()
     {
-        var package = UnityEditor.PackageManager.PackageInfo.GetAllRegisteredPackages().Single(entry => entry.name == "com.unity.textmeshpro");
+        var package = UnityEditor.PackageManager.PackageInfo.GetAllRegisteredPackages().Single(entry => entry.name ==
+#if UNITY_6000_0_OR_NEWER
+            "com.unity.ugui"
+#else
+            "com.unity.textmeshpro"
+#endif
+        );
         AssetDatabase.importPackageCompleted += OnEssentialsImported;
         AssetDatabase.importPackageFailed += OnImportFailed;
         AssetDatabase.importPackageCancelled += OnImportCancelled;
@@ -37,6 +43,7 @@ public static class ToolkitConsumerBuild
     {
         var sample = UnityEditor.PackageManager.UI.Sample.FindByPackage("com.alchemishty.multiplayer-liveops-toolkit", null).Single(entry => entry.displayName == "Full Demo");
         string scenePath = Path.Combine(sample.importPath, "Scenes/ExampleScene.unity").Replace('\\', '/');
+        if (Path.IsPathRooted(scenePath)) scenePath = FileUtil.GetProjectRelativePath(scenePath);
         if (!File.Exists(scenePath)) throw new InvalidOperationException("Imported Full Demo scene is missing.");
         var scene = EditorSceneManager.OpenScene(scenePath);
         foreach (var root in scene.GetRootGameObjects())
@@ -87,6 +94,15 @@ public static class ToolkitConsumerBuild
                 };
                 AssetDatabase.CreateAsset(catalog, "Assets/Prefabs/VisualCatalog.asset");
                 source.AddComponent<Unity.Netcode.NetworkObject>();
+                source.AddComponent<MultiplayerLiveOpsToolkit.CharacterControls.ClientNetworkTransform>();
+                var controller = UnityEditor.Animations.AnimatorController.CreateAnimatorControllerAtPath("Assets/Prefabs/Movement.controller");
+                controller.AddParameter("Speed", AnimatorControllerParameterType.Float);
+                var idle = controller.layers[0].stateMachine.AddState("Idle");
+                controller.layers[0].stateMachine.defaultState = idle;
+                var animator = source.AddComponent<Animator>();
+                animator.runtimeAnimatorController = controller;
+                animator.cullingMode = AnimatorCullingMode.AlwaysAnimate;
+                source.AddComponent<MultiplayerLiveOpsToolkit.CharacterControls.ClientNetworkAnimator>().Animator = animator;
                 source.AddComponent<NetworkPlayerIdentity>(); source.AddComponent<PlayerAccessory>(); source.AddComponent<PlayerAvatarSetup>();
                 var renderer = source.AddComponent<CosmeticRenderer>(); renderer.catalog = catalog;
                 renderer.slots = new[] { new CosmeticSlotBinding { slotId = "headwear", attachment = source.transform }, new CosmeticSlotBinding { slotId = "mainhand", attachment = source.transform } };

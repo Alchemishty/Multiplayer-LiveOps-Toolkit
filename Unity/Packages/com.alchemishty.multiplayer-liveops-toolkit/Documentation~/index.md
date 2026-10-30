@@ -1,6 +1,6 @@
 # Install and compose
 
-Add this package.json through Package Manager > + > Add package from disk, or use a local `file:` manifest dependency. Target Unity 2022.3; this preview was exercised with 2022.3.33f1. Runtime dependencies are NGO 1.9.1, Newtonsoft JSON 3.2.1 and UnityWebRequest. Installation does not start a backend, authenticate, build UI or start networking.
+Add this package.json through Package Manager > + > Add package from disk, or use a local `file:` manifest dependency. Minimum editor: Unity 2022.3. This preview was exercised with 2022.3.33f1 and Unity 6.3 LTS 6000.3.27f1. On the qualified Unity 6 editor, Unity resolves NGO 2.13.3, Transport 2.7.4, Collections 2.7.1 and Newtonsoft JSON 3.2.2. Runtime dependencies are NGO 1.9.1, Newtonsoft JSON 3.2.1 and UnityWebRequest. Installation does not start a backend, authenticate, build UI or start networking.
 
 ## Assemblies and namespaces
 
@@ -58,7 +58,7 @@ NetcodeIdentityGate exposes verified peer identity/equipment state and rejects i
 
 ## Tests and upgrades
 
-Add the package name to the project's `testables` and install Test Framework 1.3.9 to run package tests. Test assemblies are `MultiplayerLiveOpsToolkit.Tests.EditMode` and `.Tests.PlayMode`. Demo tests remain outside the package. Test dependencies do not become production startup requirements.
+Add the package name to the project's `testables` and install Test Framework 1.3.9 on Unity 2022.3 (Unity 6.3 resolves 1.6.0) to run package tests. Test assemblies are `MultiplayerLiveOpsToolkit.Tests.EditMode` and `.Tests.PlayMode`. Demo tests remain outside the package. Test dependencies do not become production startup requirements.
 
 The repository's `tools/verify_package_consumer.py` exercises a fresh project without TMP, portable tests, a local preview-version update preserving consumer scene/file bytes, and native SDK/custom UI consumers against isolated Django. This qualifies the current installation/update flow; future API-breaking upgrades need explicit migration guidance. Never edit installed package source to configure a game. Imported Samples belong in consumer Assets; reimport with overwrite can replace sample customizations.
 
@@ -71,3 +71,5 @@ Platform execution is verified on macOS desktop and an Android 13 ARM64 emulator
 ## Complete multiplayer demo
 
 [Avatar and demo integration](full-demo.md) covers the packaged avatar registry/spawner, public identity/equipment, optional character controls and account composition. Import Full Demo and open its saved ExampleScene for the working scene/art/UI. See [setup](../Samples~/FullDemo/README.md).
+
+For Full Demo on Unity 6, use uGUI 2.0.0, which includes TextMeshPro, and import TMP Essentials. Do not install the separate legacy TextMeshPro package. The authored demo uses the Built-in Render Pipeline and legacy Input Manager.

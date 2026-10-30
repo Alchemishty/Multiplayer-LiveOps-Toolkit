@@ -80,16 +80,19 @@ public sealed class NetcodeConsumer : MonoBehaviour
                     if (gate.TryGetIdentity(peerId, out var identity) && gate.TryGetEquipment(peerId, out var loadout) && loadout.ItemsBySlot.TryGetValue("mainhand", out string itemId) && itemId == "2")
                     {
                         if (!Check(identity.DisplayName == "release-client", "backend public identity")) yield break;
+                        var avatar = GetComponent<AvatarRegistry>().GetAvatar(peerId);
+                        if (avatar == null || Vector3.Distance(avatar.transform.position, new Vector3(3, 0, 4)) > 0.1f
+                            || Mathf.Abs(avatar.GetComponent<Animator>().GetFloat("Speed") - 0.5f) > 0.01f) continue;
                         hasObserved = true;
                     }
                 }
                 yield return null;
             }
-            if (!Check(hasObserved && failure == null, "remote signed updated equipment")) yield break;
+            if (!Check(hasObserved && failure == null, "remote signed updated equipment, owner movement and animation")) yield break;
             File.WriteAllText(Marker("observed"), "observed");
             while (!File.Exists(Marker("client-done")) && Time.realtimeSinceStartup < remoteDeadline) yield return null;
             if (!Check(File.Exists(Marker("client-done")), "client teardown")) yield break;
-            Finish("PASS " + mode + ": real Django identity, signed remote equipment revision" + (mode == "server" ? ", no local server account" : ", verified local host account"), 0);
+            Finish("PASS " + mode + ": real Django identity, signed remote equipment revision, owner movement/animation" + (mode == "server" ? ", no local server account" : ", verified local host account"), 0);
         }
         else
         {
@@ -98,8 +101,17 @@ public sealed class NetcodeConsumer : MonoBehaviour
             if (!Check(gate.IsLocalVerified && failure == null, "remote verification")) yield break;
             while ((manager.LocalClient == null || manager.LocalClient.PlayerObject == null) && failure == null && Time.realtimeSinceStartup < deadline) yield return null;
             if (!Check(manager.LocalClient != null && manager.LocalClient.PlayerObject != null && GetComponent<AvatarRegistry>().LocalAvatar != null, "packaged avatar spawn and registry")) yield break;
+            if (Environment.GetEnvironmentVariable("SMOKE_EXPECT_HOST") == "1")
+            {
+                var avatars = GetComponent<AvatarRegistry>();
+                while (avatars.GetAvatar(NetworkManager.ServerClientId) == null && failure == null && Time.realtimeSinceStartup < deadline) yield return null;
+                var hostAvatar = avatars.GetAvatar(NetworkManager.ServerClientId);
+                if (!Check(hostAvatar != null && hostAvatar.GetComponent<NetworkPlayerIdentity>().Username.Value.ToString() == "release-host", "existing verified host avatar visible to joining client")) yield break;
+            }
             var localAvatar = manager.LocalClient.PlayerObject;
             if (!Check(localAvatar.GetComponent<NetworkPlayerIdentity>().PlayerId.Value.ToString() == context.CurrentPlayer.PlayerId, "packaged identity replication")) yield break;
+            localAvatar.transform.position = new Vector3(3, 0, 4);
+            localAvatar.GetComponent<Animator>().SetFloat("Speed", 0.5f);
             localAvatar.GetComponent<PlayerAccessory>().BindPresentation(equipment);
             equipment.Preview(new[] { "2" });
             if (!Check(EquipmentPublicState.Parse(localAvatar.GetComponent<PlayerAccessory>().AccessoryJson.Value.Json).ItemsBySlot["headwear"] == "1", "preview remains local")) yield break;

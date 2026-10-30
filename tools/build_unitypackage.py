@@ -1,6 +1,6 @@
 """Export and verify the runtime + Full Demo as a classic Unity asset package.
 
-Uses an isolated Unity 2022.3 project, removed after verification. The main
+Uses an isolated Unity consumer project, removed after verification. The main
 project is never modified. Dependencies and TMP Essentials are prerequisites,
 not copied into the exported toolkit.
 """
@@ -14,6 +14,7 @@ import os
 import re
 import tarfile
 import tempfile
+from verify_package_consumer import sample_dependencies
 
 ROOT = Path(__file__).resolve().parents[1]
 UNITY_PROJECT = ROOT / 'Unity'
@@ -108,18 +109,18 @@ def main():
         unity('create-project', '-createProject', str(project), '-quit')
         dependencies = {name: version for name, version in json.loads((UNITY_PROJECT / 'Packages/manifest.json').read_text())['dependencies'].items() if name.startswith('com.unity.modules.')}
         dependencies.update(json.loads((PACKAGE / 'package.json').read_text())['dependencies'])
-        dependencies.update({'com.unity.textmeshpro': '3.0.6', 'com.unity.ugui': '1.0.0'})
+        editor_version = (project / 'ProjectSettings/ProjectVersion.txt').read_text().split('m_EditorVersion: ', 1)[1].splitlines()[0]
+        dependencies.update(sample_dependencies(editor_version))
         (project / 'Packages/manifest.json').write_text(json.dumps({'dependencies': dependencies}, indent=4) + '\n')
         staging = project / IMPORT_ROOT
         for relative, source in sources.items():
             destination = staging / relative
             destination.parent.mkdir(parents=True, exist_ok=True)
             destination.write_bytes(export_content(relative, source))
-        # Unity's separately imported Essentials keep their standard GUIDs.
-        shutil.copytree(UNITY_PROJECT / 'Assets/TextMesh Pro', project / 'Assets/TextMesh Pro')
         editor = project / 'Assets/Editor'
         editor.mkdir(exist_ok=True)
         shutil.copy2(ROOT / 'tools/consumer/UnityPackageBuild.cs', editor)
+        unity('import-tmp-essentials', '-projectPath', str(project), '-executeMethod', 'UnityPackageBuild.ImportEssentials')
         unity('export', '-projectPath', str(project), '-executeMethod', 'UnityPackageBuild.Export', '-quit')
         verify_archive(output, sources)
         # Import into an empty toolkit location, not the staged source tree.

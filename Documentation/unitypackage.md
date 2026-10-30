@@ -6,14 +6,14 @@ The classic asset package includes the toolkit runtime and Full Demo, with their
 
 ## Before importing
 
-Use Unity **2022.3** with the Built-in Render Pipeline. Install these dependencies through Package Manager (Add package by name):
+Use Unity **2022.3** or the qualified **Unity 6.3 LTS 6000.3.27f1** with the Built-in Render Pipeline. Install these dependencies through Package Manager (Add package by name):
 
-| Package | Version |
-|---|---|
-| `com.unity.netcode.gameobjects` | `1.9.1` |
-| `com.unity.nuget.newtonsoft-json` | `3.2.1` |
-| `com.unity.textmeshpro` | `3.0.6` |
-| `com.unity.ugui` | `1.0.0` |
+| Package | Unity 2022.3 | Unity 6.3 |
+|---|---|---|
+| `com.unity.netcode.gameobjects` | `1.9.1` | `2.13.3` |
+| `com.unity.nuget.newtonsoft-json` | `3.2.1` | `3.2.2` |
+| `com.unity.textmeshpro` | `3.0.6` | Included in uGUI; do not install separately |
+| `com.unity.ugui` | `1.0.0` | `2.0.0` |
 
 Import **Window > TextMeshPro > Import TMP Essential Resources**. Keep the standard Animation and UnityWebRequest engine modules enabled.
 
@@ -39,4 +39,4 @@ From the repository root, run:
 python3 tools/build_unitypackage.py
 ```
 
-Requires the installed macOS Unity 2022.3.33f1 editor. The tool exports through Unity, checks the archive contents, reimports into an isolated project and builds the imported demo. It removes the temporary project afterward. Output and verification logs are under `Unity/Builds/Distribution/`; `--output` and `--unity` override the archive/editor paths.
+Requires an installed macOS Unity editor; the default is 2022.3.33f1. The tool exports through Unity, checks the archive contents, reimports into an isolated project and builds the imported demo. It removes the temporary project afterward. Output and verification logs are under `Unity/Builds/Distribution/`; `--output` and `--unity` override the archive/editor paths.

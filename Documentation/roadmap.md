@@ -10,7 +10,8 @@ The current toolkit includes the account modules, cosmetic rendering, multiplaye
 
 ## Planned expansion
 
-- [ ] Add and qualify Unity 6 support. The current supported editor line is Unity 2022.3.
+- [x] Qualify Unity 6.3 LTS 6000.3.27f1 alongside Unity 2022.3. See [Unity 6 setup](unity6.md).
+- [ ] Qualify additional Unity 6 release lines and future major versions as they are adopted.
 - [ ] Expand Inventory beyond cosmetic ownership. Define the required item mechanics before choosing their implementation.
 - [ ] Expand admin/dashboard editing for backend configuration currently authored in code, including currency conversion rates and equipment slot/conflict rules. A dedicated content dashboard can build on this.
 

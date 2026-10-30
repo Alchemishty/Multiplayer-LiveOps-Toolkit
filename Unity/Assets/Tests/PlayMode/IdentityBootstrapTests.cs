@@ -358,13 +358,22 @@ public class IdentityBootstrapTests
         settings.FindProperty("port").intValue = unusedPort;
         settings.FindProperty("connectionTimeout").floatValue = shouldWaitForFallback ? 0.05f : 2f;
         settings.ApplyModifiedPropertiesWithoutUndo();
+        bool hasCancelledBeforeFallback = false;
+        Action<bool> cancelBeforeFallback = wasHost =>
+        {
+            hasCancelledBeforeFallback = true;
+            bootstrapObject.SetActive(false);
+        };
+        if (shouldWaitForFallback) manager.OnClientStopped += cancelBeforeFallback;
         deadline = Time.realtimeSinceStartup + 2;
         while (!manager.IsClient && Time.realtimeSinceStartup < deadline) yield return null;
         Assert.That(manager.IsClient, Is.True);
         if (shouldWaitForFallback)
         {
-            while (manager.IsListening && Time.realtimeSinceStartup < deadline) yield return null;
-            Assert.That(manager.IsListening, Is.False, "Test must cancel while host fallback is pending.");
+            deadline = Time.realtimeSinceStartup + 5;
+            while (!hasCancelledBeforeFallback && Time.realtimeSinceStartup < deadline) yield return null;
+            manager.OnClientStopped -= cancelBeforeFallback;
+            Assert.That(hasCancelledBeforeFallback, Is.True, "Client shutdown must cancel authentication before host fallback.");
         }
         if (shouldDisableConnection) autoConnect.enabled = false;
         else bootstrapObject.SetActive(false);

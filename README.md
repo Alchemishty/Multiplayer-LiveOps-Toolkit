@@ -68,7 +68,7 @@ Account authority and gameplay authority are separate. The supplied movement is 
 
 ## Current support
 
-- **Unity:** 2022.3; developed and tested with 2022.3.33f1.
+- **Unity:** 2022.3 and Unity 6.3 LTS; tested with 2022.3.33f1 and 6000.3.27f1. The repository demo stays on 2022.3; see [Unity 6 setup](Documentation/unity6.md) for a fresh consumer project.
 - **Platforms:** macOS desktop and Android builds. Android is verified on an ARM64 Android 13 emulator using Unity 2022.3.33f1, NGO 1.9.1, IL2CPP and OpenGL ES 3, including account mechanics, Android/desktop multiplayer and user-approved Full Demo visuals. Follow [Android setup and build](Documentation/android.md). Physical Android devices, Unity 6 Android, iOS, Windows, Linux and Unity's dedicated-server build target remain unqualified.
 - **Inventory:** cosmetic ownership. General item stacks, consumables and equipment stats are outside the current implementation.
 - **Backend:** Django is a reference implementation. Games choose their own hosting, database operations and additional economy policies.
@@ -84,13 +84,15 @@ The Unity project is in **`Unity/`**. Add that folder to Unity Hub; the reposito
 
 **Build and run on Android:** follow [Android setup](Documentation/android.md) for SDK/emulator installation, backend forwarding, public trust and APK build settings.
 
+**Use Unity 6:** follow the [Unity 6 setup guide](Documentation/unity6.md) for a fresh project and Full Demo.
+
 **Install in a fresh Unity project:** choose the [`.unitypackage` download](https://github.com/Alchemishty/Multiplayer-LiveOps-Toolkit/releases) with its [import guide](Documentation/unitypackage.md), or use [Package Manager integration](Documentation/package-integration.md). Both formats include Full Demo and require the documented Unity dependencies/TMP Essentials.
 
 **Build your own integration:** start with the [package guide](Unity/Packages/com.alchemishty.multiplayer-liveops-toolkit/Documentation~/index.md), [visual customization](Unity/Packages/com.alchemishty.multiplayer-liveops-toolkit/Documentation~/equipment-visuals.md) and [multiplayer avatar integration](Unity/Packages/com.alchemishty.multiplayer-liveops-toolkit/Documentation~/full-demo.md).
 
 ## Development and next steps
 
-See the [roadmap](Documentation/roadmap.md) for Unity 6 support, inventory beyond cosmetics, admin/dashboard editing and current platform/availability gaps. The [architecture decisions](Documentation/architecture-decisions.md) explain the choices behind account authority, multiplayer verification and recovery.
+See the [roadmap](Documentation/roadmap.md) for additional Unity/platform qualification, inventory beyond cosmetics, admin/dashboard editing and current platform/availability gaps. The [architecture decisions](Documentation/architecture-decisions.md) explain the choices behind account authority, multiplayer verification and recovery.
 
 Browse the [project documentation](Documentation/README.md) for all usage guides.
 
