@@ -4,8 +4,6 @@ Multiplayer LiveOps Toolkit gives Unity developers ready-to-use systems for play
 
 https://github.com/user-attachments/assets/6a7ee96b-8809-4a31-9c5c-ef946abc443f
 
-**See the toolkit in action** — 57 seconds · 1080p / 60 fps · silent. Local cosmetic previews, equipment exclusions, persistent inventories, shops, currencies, multiplayer sync, late joining and rewards. [Download the video](Documentation/media/sdk-showcase.mp4) · [Credits](Documentation/media/CREDITS.md).
-
 It is built for multiplayer games. Players can try on cosmetics locally, save their equipment through a backend, and share their approved appearance with other players. The package includes cosmetic rendering and multiplayer avatar setup. Movement, animation replication and camera controls are also provided as optional integrations.
 
 The goal is to reuse these systems across games: choose the modules you need, replace the art and UI, and build your game's additional features around them. A self-hosted Django backend is included as a working reference; you can connect another backend through the module interfaces.
