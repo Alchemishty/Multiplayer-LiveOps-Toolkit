@@ -1,13 +1,13 @@
 # Build and run on Android
 
-The toolkit supports Android builds. The verified configuration is **Unity 2022.3.33f1, Netcode for GameObjects 1.9.1, ARM64 IL2CPP and OpenGL ES 3**, running on a Pixel 5 Android 13/API 33 ARM64 emulator on macOS Apple Silicon. Account mechanics, Android/desktop multiplayer and Full Demo touch interactions passed. The user approved the Full Demo visuals on October 30, 2026.
+The toolkit supports Android builds. The verified configuration is **Unity 2022.3.33f1, Netcode for GameObjects 1.9.1, ARM64 IL2CPP and OpenGL ES 3**, running on a Pixel 5 Android 13/API 33 ARM64 emulator on macOS Apple Silicon. Qualification covers account mechanics, Android/desktop multiplayer and Full Demo touch interactions.
 
 Physical Android devices, other Android versions/graphics APIs, Unity 6 Android builds and Play Store distribution still require qualification. Unity 6 is separately qualified on macOS.
 
 ## Install the tools
 
 1. In Unity Hub, add **Android Build Support**, including **Android SDK & NDK Tools** and **OpenJDK**, to Unity 2022.3.33f1. In Unity's External Tools preferences, use the tools installed with that editor.
-2. Install Android Studio's Device Manager/emulator and Android SDK Platform Tools. Create and start an **ARM64 Android 13/API 33** virtual device on Apple Silicon. The tested device profile was Pixel 5.
+2. Install Android Studio's Device Manager/emulator and Android SDK Platform Tools. Create and start an **ARM64 Android 13/API 33** virtual device on Apple Silicon. The qualified device profile is Pixel 5.
 3. Put the selected SDK's `platform-tools` directory on your shell's PATH so `adb` is available. Run `adb devices`; the emulator must appear as `device`.
 4. Open the repository's `Unity/` folder, or import Full Demo into a Built-in Render Pipeline project using [package integration](package-integration.md). Import TMP Essentials for a fresh consumer project.
 
@@ -101,12 +101,12 @@ adb -s emulator-5554 emu redir add udp:17779:7777
 
 Set the desktop client's AutoConnect address to `127.0.0.1` and port to `17779` before starting it. Remove the mapping afterward with `adb -s emulator-5554 emu redir del udp:17779`. These are local development arrangements; games supply their own deployment networking, matchmaking/relay and connection policy. Physical devices need their own reachable host configuration.
 
-The qualification passed Android client ↔ macOS host, Android client ↔ headless macOS server and Android host ↔ macOS client. Those SDK probes used isolated test configuration. The repository's automated consumer verification tools currently build macOS players, not Android APKs.
+Qualified roles are Android client ↔ macOS host, Android client ↔ headless macOS server and Android host ↔ macOS client, with isolated SDK test configuration. The repository's automated consumer verification tools build macOS players, not Android APKs.
 
 ## Troubleshooting
 
 - **Cannot reach backend:** check the backend process, selected device serial and `adb reverse --list`. Reapply forwarding after Unity's device scan resets ADB. An app restart requires another sign-in because tokens stay in memory.
 - **Identity configuration error:** re-export matching public trust into the consuming project's StreamingAssets and rebuild. Confirm backend signer/context values match the exported trust.
-- **Expired/not-yet-valid proof:** correct the emulator's date/time. The test emulator drifted after inactivity; do not relax proof expiry checks to compensate.
-- **Startup hangs or system ANRs:** the tested older emulator had Vulkan hangs; keep OpenGLES3 selected. Cold-boot the AVD without restoring a snapshot if needed. Qualification used `-no-snapshot-load -no-snapshot-save -gpu host -feature -Vulkan` emulator launch options without wiping its data.
-- **Desktop cannot join Android host:** confirm UDP redirection and the AutoConnect port/address on each peer. The tested AVD also required resolving competing Wi-Fi/Ethernet routes; a TCP backend connection alone does not prove UDP reachability.
+- **Expired/not-yet-valid proof:** correct the emulator's date/time. An inactive emulator can drift; do not relax proof expiry checks to compensate.
+- **Startup hangs or system ANRs:** the qualified emulator configuration avoids Vulkan hangs; keep OpenGLES3 selected. Cold-boot the AVD without restoring a snapshot if needed. The qualified launch options are `-no-snapshot-load -no-snapshot-save -gpu host -feature -Vulkan`, without a data wipe.
+- **Desktop cannot join Android host:** confirm UDP redirection and the AutoConnect port/address on each peer. Competing Wi-Fi/Ethernet routes can also affect the AVD; a TCP backend connection alone does not prove UDP reachability.

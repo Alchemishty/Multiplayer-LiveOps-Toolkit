@@ -78,7 +78,7 @@ These choices describe how the toolkit handles account state, multiplayer and as
 
 **Alternative.** Migrate to Task-based async/await or adopt a Unity-specific async library.
 
-**Why.** The project retained its existing coroutine model for consistency, avoiding a migration and two competing execution models. This does not mean that standard async/await requires an extra library.
+**Why.** A consistent coroutine model avoids competing execution models within the Unity integration. Standard async/await does not require an extra library.
 
 **Tradeoff.** Async return values and composition can be clearer with async/await. Coroutines require explicit completion, nested operation driving and cancellation cleanup; durable owners must keep pending account work independent of view lifetime.
 

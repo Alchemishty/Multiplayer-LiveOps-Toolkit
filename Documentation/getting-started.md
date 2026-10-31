@@ -1,19 +1,16 @@
 # Run the demo
 
-The repository demo and the package's Full Demo sample use the same toolkit runtime, authored scene/art/UI and separately hosted Django reference backend.
+This walkthrough runs the repository's saved demo with a local Django backend and two player accounts. Complete backend, account and public-trust setup before entering Play Mode.
 
-To try the repository demo, follow the steps below. To use a fresh Unity project, follow [package installation and Full Demo import](package-integration.md#import-the-full-demo), with the same backend/account/public-trust setup. The imported scene is under the sample folder rather than the repository's Unity/Assets/Scenes folder.
-
-For a separate Unity 6 consumer project, follow [Unity 6 setup](unity6.md). The repository demo below retains its Unity 2022.3 baseline.
+For a fresh consuming project, first [install the toolkit](../Unity/Packages/com.alchemishty.multiplayer-liveops-toolkit/Documentation~/installation.md). Use its imported Full Demo scene and export trust into that project's Assets directory in the steps below. The repository demo uses Unity 2022.3; [Unity 6](unity6.md) uses a separate consuming project.
 
 ## Requirements
 
-- Unity **2022.3.33f1** (see `Unity/ProjectSettings/ProjectVersion.txt`).
-- Python **3.11** for the backend, or Docker Compose.
-- For Android, install Unity Android Build Support and an ARM64 emulator; see [Android requirements](android.md#install-the-tools).
-- Git and Git LFS. Binary assets use LFS; Unity YAML and `.meta` files stay in ordinary Git.
+- Unity **2022.3.33f1** for the repository project.
+- Python **3.11**, Git and Git LFS.
+- Two different player accounts for the multiplayer check.
 
-## Clone
+## Clone the repository
 
 ```sh
 git lfs install
@@ -22,9 +19,9 @@ cd Multiplayer-LiveOps-Toolkit
 git lfs pull
 ```
 
-Commit asset changes together with their `.meta` files. The project uses Visible Meta Files and Force Text serialization. Unity caches, builds, local databases, credentials, and virtual environments are excluded.
+## Prepare the backend
 
-## Run the backend
+From the repository root, create the environment and database:
 
 ```sh
 cd backend
@@ -37,60 +34,92 @@ source .env
 set +a
 python manage.py migrate
 python manage.py seed
+python manage.py createsuperuser
+```
+
+Keep this shell open for the signing configuration and server startup below. `.env` is not loaded automatically by Django: source it whenever you open a backend shell. On PowerShell, activate `.venv\Scripts\Activate.ps1` and set the environment variables from `.env.example` explicitly.
+
+The seed command supplies current sample content. The legacy `initial_data.json` fixture is not compatible with the current schema. SQLite is for local development; use `--nothreading` below to avoid overlapping first-login write-lock errors.
+
+## Configure local signing and public trust
+
+The backend signs account identity and equipment; Unity hosts/servers verify those signatures with public keys. A missing signer or mismatched public trust prevents spawning.
+
+Generate a dedicated local RSA key **once**, outside the repository. Reuse your existing key if you already have one; do not overwrite it:
+
+```sh
+mkdir -p "$HOME/.config/liveops"
+chmod 700 "$HOME/.config/liveops"
+(umask 077; openssl genpkey -algorithm RSA -pkeyopt rsa_keygen_bits:2048 -out "$HOME/.config/liveops/identity-proof.pem")
+```
+
+In the same backend shell, configure a consistent local context:
+
+```sh
+export LIVEOPS_PROOF_PRIVATE_KEY_FILE="$HOME/.config/liveops/identity-proof.pem"
+export LIVEOPS_PROOF_KEY_ID=local-demo-1
+export LIVEOPS_PROOF_ISSUER=https://identity.example.invalid
+export LIVEOPS_GAME_ID=toolkit-demo
+export LIVEOPS_ENVIRONMENT=development
+export LIVEOPS_CONTENT_VERSION=catalog-1
+export LIVEOPS_PROOF_LIFETIME_SECONDS=60
+mkdir -p ../Unity/Assets/StreamingAssets
+python manage.py export_identity_trust > ../Unity/Assets/StreamingAssets/LiveOpsIdentityTrust.json
+```
+
+The issuer is an identifier, not a URL Unity contacts. Record these values in your local ignored `backend/.env` for later sessions; use an absolute private-key path there. The exported JSON contains **public keys and context only** and may be bundled with Unity builds. Never copy the private PEM into Unity. For a consuming project, replace the export destination with its `Assets/StreamingAssets/LiveOpsIdentityTrust.json` path.
+
+Unity reads that public file by default. `LIVEOPS_IDENTITY_TRUST_FILE` can override it, but a GUI-launched Unity editor may not inherit shell environment variables. Key rotation and validation rules are in the optional [protocol reference](multiplayer-identity-verification.md).
+
+## Start the backend and create player accounts
+
+In the configured backend shell:
+
+```sh
 python manage.py runserver 127.0.0.1:8000 --nothreading
 ```
 
-PowerShell activation is `.venv\Scripts\Activate.ps1`; set the variables from `.env.example` in that shell. Django reads process environment variables, so creating `.env` alone does not load it. Use the seed command for the current schema; the imported `initial_data.json` fixture is legacy data from an earlier schema.
+1. Open `http://localhost:8000/admin/` and sign in with the administrator you created.
+2. Under **Users > Add user**, create two ordinary active users with passwords.
+3. Sign each player in once in Unity after completing the next section. First login creates missing player profiles and wallets with **zero** balances.
+4. Return to admin and fund each player's test wallets. Refresh the Unity account views after funding them.
 
-Alternatively, from the repository root:
+The demo uses password login; it has no self-service registration and grants no starting currency automatically. Failed login creates no user. Existing development accounts can receive passwords through admin while retaining their profiles and balances. Username-only development login/reset are separate DEBUG-only tools.
 
-```sh
-cp backend/.env.example backend/.env
-docker compose up --build
-```
+For Docker instead of Python server startup, see [local Compose setup](backend-operations.md#local-compose-setup). Keep signing configuration and exported public trust consistent whichever server you use.
 
-This starts the local development backend at `http://localhost:8000` and persists SQLite data in a Docker volume. Migrations are committed and applied, never generated at container startup. These examples use development configuration; deployment requires production secrets, authentication, host/TLS settings, and a database/operations review.
+## Open Unity and sign in
 
-## Run Unity
+1. Add the repository's **Unity/** folder to Unity Hub and open it with 2022.3.33f1. Allow packages/assets to import.
+2. Open **Assets/Scenes/ExampleScene.unity**. In a consuming project, open the imported Full Demo scene instead.
+3. Confirm the backend is running and the public trust JSON is in this project's **Assets/StreamingAssets/** folder.
+4. Enter Play Mode, enter the first player's username/password and click **Sign in**.
+5. Wait for the connection attempt to time out and the first instance to become host. The login panel hides when the local avatar is registered.
 
-1. Add the repository's `Unity/` folder in Unity Hub and open it with 2022.3.33f1. Allow packages and assets to import.
-2. Configure [identity proof signing and public trust](multiplayer-identity-verification.md#backend-configuration), then open `Assets/Scenes/ExampleScene.unity` within that Unity project and start the backend. The sample uses Django username/password login; create an account as described below.
-3. Enter Play Mode, enter your Django username/password, and click Sign in.
-4. The first instance becomes a Netcode host after a connection timeout; additional instances connect to it. Run builds from Unity's Build Settings with ExampleScene enabled.
+The backend URL defaults to `http://localhost:8000`. To change it, call `ApiConfig.SetBaseUrl` before authentication starts. Non-loopback credential requests require HTTPS and reject redirects. Passwords clear on submission; tokens stay in memory, so a restarted context requires another sign-in.
 
-The saved `Assets/Scenes/ExampleScene.unity` and its prefabs define the demo. Edit those assets directly; run `python3 tools/sync_full_demo.py` after demo changes to update the package sample. API requests default to `http://localhost:8000`; `ApiConfig.SetBaseUrl` supports an override. Username-only development login and development reset require `DEBUG=True`; the demo signs in through Django username/password authentication.
+## Run a second instance and verify
 
-## Build and run on Android
+1. Add ExampleScene to **Build Settings > Scenes In Build**, build a desktop player and launch it alongside the editor.
+2. Sign in with the second account. The default local connection joins the first instance on port 7777.
+3. Confirm both avatars and their player names appear in each instance.
+4. Preview a cosmetic: only the previewing player sees the change.
+5. Buy and equip an affordable cosmetic: balances/ownership update, then the approved appearance becomes visible to the other player.
+6. Open Achievements and Daily Rewards. Confirm state loads; claim an eligible reward and refresh to confirm the persisted result.
 
-Android builds are supported on the [verified ARM64 emulator configuration](android.md). Follow the [Android setup and build guide](android.md) after completing the backend, account and public-trust setup here. It covers Android Build Support/SDK/NDK/JDK, IL2CPP/ARM64/OpenGLES3 settings, APK installation, localhost backend forwarding and desktop multiplayer. The demo's movement/camera controls remain keyboard-based.
+For a headless server, launch the desktop executable with `-batchmode -nographics -liveops-server`, with public trust configured. It verifies players without a local account. This is a desktop headless role, not qualification of Unity's dedicated-server build target.
 
-## Create a login account
+For Android, continue with [Android setup and build](android.md). Its UI supports touch; supplied movement/camera controls use keyboard input.
 
-The sample signs in through `POST /api/auth/password/`. It does not register users. After migrating and seeding the backend, create an administrator interactively:
+## Troubleshooting
 
-```sh
-cd backend
-.venv/bin/python manage.py createsuperuser
-```
+| Symptom | Check |
+|---|---|
+| Login fails | Active user, correct password, backend running; failed login does not register an account. |
+| No avatar / proof configuration error | Backend signing variables, private-key readability, exported trust in the correct Unity project, and matching context/key ID. |
+| Expired or not-yet-valid proof | Synchronize host/client/backend clocks. |
+| Cannot afford any item | Fund the player wallets in admin, then refresh the account views. |
+| Second instance becomes another host | Start the first instance fully; confirm address/UDP port 7777 and firewall reachability. |
+| Session ends after renewal failure | Resolve the backend/authentication failure, then restart the sample context and sign in again. |
 
-Open `http://localhost:8000/admin/`, sign in as the administrator, then use **Users → Add user** to create an ordinary active player with a password. Use that player's username/password in the Unity sample. Django admin also provides password changes. An existing development account can be given a password there; its existing player profile and balances are preserved.
-
-The first verified login provisions missing player/profile wallets with zero balances. Use Django admin to fund test wallets. There is no automatic development currency grant on password login. Failed login never creates a user. The separate username-only development provider remains available explicitly for development accounts; it cannot bypass accounts with passwords and is disabled by Django outside DEBUG mode.
-
-The Unity adapter requires HTTPS for non-loopback servers and refuses redirects. Local `localhost`/`127.0.0.1` HTTP remains available for development. Passwords are masked and cleared on submission; they are not saved. Session tokens stay in memory through the context-owned `DjangoPlayerSession`. Access tokens renew 30 seconds before expiry; refresh requests are shared and recovery is bounded. Terminal renewal failure clears credentials and disconnects the sample. Restart the sample context to sign in again. The sample requires signed multiplayer identity verification before player spawn or player-state observation; hosts verify their local player too. See [identity proof configuration and protocol](multiplayer-identity-verification.md).
-
-For a headless sample server, launch the desktop executable with `-batchmode -nographics -liveops-server`. The gate verifies peers with configured public trust; this role does not sign in to a player account. The sample spawner still requires its configured player prefab. The gate can be used separately without sample UI or prefabs. Unity and builds load `Assets/StreamingAssets/LiveOpsIdentityTrust.json` by default; `LIVEOPS_IDENTITY_TRUST_FILE` overrides the path. Only public trust belongs in that file.
-
-SQLite is a local development database. Concurrent first-login profile creation on Django's threaded development server can produce SQLite write-lock errors; use `--nothreading` locally. Production database/concurrency qualification remains part of the wider backend refactor.
-
-## Verification
-
-```sh
-cd backend
-.venv/bin/python manage.py check
-.venv/bin/python manage.py makemigrations --check --dry-run
-.venv/bin/python manage.py test shop
-```
-
-Unity: run both demo (`EditModeTests`, `PlayModeTests`) and package (`MultiplayerLiveOpsToolkit.Tests.EditMode`, `MultiplayerLiveOpsToolkit.Tests.PlayMode`) assemblies in Test Runner, then inspect the console after returning to Edit Mode. Current regression results and platform qualification are recorded in [docs/testing.md](../docs/testing.md). Test Framework is pinned to 1.3.9 to fix the earlier runner teardown exception. Backend checks run in GitHub Actions. Unity CI requires a separately configured Unity license workflow; it is not configured here.
-
+For developer checks, see [testing](../docs/testing.md). For content changes and deployment limits, see [backend operations](backend-operations.md).

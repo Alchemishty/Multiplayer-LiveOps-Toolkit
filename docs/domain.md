@@ -84,9 +84,9 @@ Wallet is account-scoped and independent of avatars, Netcode and UI. The backend
 
 ## Achievement authority
 
-`GET /api/achievements/state/` returns definitions, confirmed progress/completion, claim flags and required Wallet/Inventory snapshots. `POST /api/achievements/claim/` accepts exactly `{"achievement_id":"..."}` and returns the same state plus `claimed_achievement_id`. Unknown/inactive, locked, already claimed and no-reward achievements reject without granting. Client counts/player IDs are rejected; legacy count/unlock routes are removed.
+`GET /api/achievements/state/` returns definitions, confirmed progress/completion, claim flags and required Wallet/Inventory snapshots. `POST /api/achievements/claim/` accepts exactly `{"achievement_id":"..."}` and returns the same state plus `claimed_achievement_id`. Unknown/inactive, locked, already claimed and no-reward achievements reject without granting. Client counts/player IDs are rejected.
 
-Sample conditions: successful individual/set purchase counts, actual currency charged by Shop, current owned cosmetic collections and recorded daily attendance. Existing progress is preserved; no historical spend is inferred from current prices. Completion does not itself grant rewards. Claims atomically set `UserAchievement.is_claimed` and grant configured currency/cosmetics once. No-reward completion has no claim action. Generic gameplay-event evidence and game-specific receipts/history are outside this slice.
+Sample conditions: successful individual/set purchase counts, actual currency charged by Shop, current owned cosmetic collections and recorded daily attendance. Existing progress is preserved; no historical spend is inferred from current prices. Completion does not itself grant rewards. Claims atomically set `UserAchievement.is_claimed` and grant configured currency/cosmetics once. No-reward completion has no claim action. Generic gameplay-event evidence and game-specific receipts/history are outside the current implementation.
 
 ## Daily Rewards authority
 

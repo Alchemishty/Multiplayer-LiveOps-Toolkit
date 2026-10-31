@@ -34,14 +34,7 @@ Backend lifetime defaults to 60 seconds and must be an integer from 1–300. The
 
 ## Backend configuration
 
-Install `backend/requirements.txt` (PyJWT is supplied by SimpleJWT; the pinned cryptography dependency enables RS256). Provision a dedicated unencrypted PEM RSA private key in a restricted location **outside the repository**. For example, generate it locally with OpenSSL in a directory readable only by the backend operator:
-
-```sh
-mkdir -p "$HOME/.config/liveops"
-chmod 700 "$HOME/.config/liveops"
-(umask 077; openssl genpkey -algorithm RSA -pkeyopt rsa_keygen_bits:2048 -out "$HOME/.config/liveops/identity-proof.pem")
-openssl pkey -in "$HOME/.config/liveops/identity-proof.pem" -pubout -out "$HOME/.config/liveops/identity-proof-public.pem"
-```
+For local key generation, environment setup and public-trust export, follow [Run the demo](getting-started.md#configure-local-signing-and-public-trust). The backend requires a dedicated unencrypted PEM RSA private key in a restricted location outside the repository. `backend/requirements.txt` supplies PyJWT through SimpleJWT and the cryptography dependency for RS256.
 
 Set the following process environment values before starting Django (see `backend/.env.example`). Key material must be mounted/provisioned separately for containers; the example Compose configuration does not provision it.
 
@@ -65,7 +58,7 @@ Rotation uses an explicit overlap of trusted public keys. Construct a new verifi
 
 `IdentityChallenge.Create` generates a cryptographically random nonce. The server must retain **one instance per pending peer**, bound to the actual transport connection and session. Verification atomically consumes that instance only on success; malformed attempts do not consume it. Never reconstruct it from response data, reuse its nonce or create multiple instances for the same peer challenge. `jti` is not a global replay cache: replay protection depends on this server-owned single-use challenge.
 
-`DjangoIdentityProofAPI` implements `IIdentityProofBackend` through an explicitly supplied `IAuthenticatedSession`. It sends only session/challenge in the body, treats the result as opaque, rejects late account responses and reports typed request failures. The operation owner must drive/dispose its coroutine during context teardown; callbacks complete once for a started operation. `NetcodeIdentityGate` owns and disposes the operation in the sample, with a bounded handshake deadline. `PlayerContext` now owns the player session, while the existing gate owns server verification. DjangoPlayerModules composes explicitly selected account modules under PlayerContext; see the [package guide](../Unity/Packages/com.alchemishty.multiplayer-liveops-toolkit/Documentation~/index.md).
+`DjangoIdentityProofAPI` implements `IIdentityProofBackend` through an explicitly supplied `IAuthenticatedSession`. It sends only session/challenge in the body, treats the result as opaque, rejects late account responses and reports typed request failures. The operation owner must drive/dispose its coroutine during context teardown; callbacks complete once for a started operation. `NetcodeIdentityGate` owns and disposes the operation in the sample, with a bounded handshake deadline. `PlayerContext` owns the player session; the gate owns server verification. DjangoPlayerModules composes explicitly selected account modules under PlayerContext; see the [package guide](../Unity/Packages/com.alchemishty.multiplayer-liveops-toolkit/Documentation~/index.md).
 
 The implementation uses library cryptography and JSON parsing: [PyJWT encoding/verification API](https://pyjwt.readthedocs.io/en/latest/api.html), [Microsoft cryptographic signatures](https://learn.microsoft.com/en-us/dotnet/standard/security/cryptographic-signatures). Newtonsoft.Json is an explicit engine-independent Identity dependency for bounded parsing and duplicate-field rejection.
 
@@ -89,13 +82,13 @@ A valid proof consumes the pending challenge and binds identity once. Invalid, e
 
 The sample spawner runs only after verification. It withholds sample player visibility from unverified peers, reveals existing players after verification and initializes the new player's public ID/display name before spawning. Nameplate NetworkVariables permit server writes only. Game-specific replicated objects must use appropriate visibility rules too; the gate is not a universal firewall for arbitrary gameplay custom messages or pre-existing scene objects.
 
-Validated on Unity 2022.3/macOS with editor-hosted real Unity Transport tests and separate standalone processes against Django: host plus client, and headless server-role plus two clients. Android ARM64 emulator checks also passed Android client/desktop host, Android client/headless desktop server and Android host/desktop client roles, including signed equipment verification; see [Android setup](android.md). Windows and other server operating systems remain release qualification work. Complete idle-backend health monitoring remains an open gap.
+Qualified roles include macOS host/client and headless server/client, plus Android/desktop combinations with signed equipment verification. See [retained qualification evidence](../docs/testing.md#retained-qualification-evidence) and [Android setup](android.md) for exact configurations and limits. Complete idle-backend health monitoring remains an open gap.
 
 ## Equipment protocol v1 (implemented)
 
 Equipment uses the same public trust policy and asymmetric key configuration, with a distinct `liveops-equipment+jwt` type. Its payload has the thirteen identity claims plus `revision` (nonnegative signed 64-bit integer below `long.MaxValue`) and `items` (at most 32 unique slot-to-cosmetic string ID pairs). IDs use the existing bounded identifier alphabet, up to 128 characters. The maximum equipment assertion is 32768 ASCII bytes; identity keeps its 8192-byte bound. Exact claim sets, duplicate JSON properties and protocol types are checked before consuming the challenge.
 
-The authenticated `/api/equipment/proof/` request accepts only `session_id` and canonical `challenge`. Django signs its current canonical equipped flags and revision, never a client-provided loadout. `/api/equipment/loadout/` GET returns definitions/state; POST accepts only `item_ids` and `expected_revision`. Ownership, configured symmetric conflicts and a revision compare-and-swap are checked inside one account transaction. A set application is one replace request. Old get-equipped/update-equipped routes and the client's raw loadout RPC are removed.
+The authenticated `/api/equipment/proof/` request accepts only `session_id` and canonical `challenge`. Django signs its current canonical equipped flags and revision, never a client-provided loadout. `/api/equipment/loadout/` GET returns definitions/state; POST accepts only `item_ids` and `expected_revision`. Ownership, configured symmetric conflicts and a revision compare-and-swap are checked inside one account transaction. A set application is one replace request. Equipment changes use this authenticated loadout endpoint, with signed proofs for public replication.
 
 When Equipment is configured, identity verification creates a separate equipment challenge before publishing the peer identity or spawning/revealing players. The server verifies proof context and the already verified player ID, then retains only the sanitized EquipmentLoadout. Later challenges accept newer revisions, or an identical loadout at the same revision; older revisions and same-revision different contents are rejected. Fresh per-peer challenges prevent assertion replay. Existing verified peers keep their public state until another proof passes; rejected peers are disconnected.
 

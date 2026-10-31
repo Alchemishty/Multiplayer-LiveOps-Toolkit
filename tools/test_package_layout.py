@@ -3,6 +3,7 @@ import json
 import unittest
 import tempfile
 import re
+import posixpath
 import verify_package_consumer
 import sync_full_demo
 import build_unitypackage
@@ -26,6 +27,19 @@ class PackageLayoutTests(unittest.TestCase):
         content = build_unitypackage.export_content(Path('Documentation/full-demo.md'), source)
         self.assertIn(b'(../FullDemo/README.md)', content)
         self.assertNotIn(b'(../Samples~/FullDemo/README.md)', content)
+
+    def test_unitypackage_relative_documentation_links_resolve(self):
+        files = build_unitypackage.export_sources()
+        for destination, source in files.items():
+            if destination.suffix != '.md':
+                continue
+            content = build_unitypackage.export_content(destination, source).decode()
+            for link in re.findall(r'\[[^\]]*\]\(([^)]+)\)', content):
+                if '://' in link or link.startswith(('mailto:', '#')):
+                    continue
+                target = link.split('#', 1)[0]
+                resolved = Path(posixpath.normpath(str(destination.parent / target)))
+                self.assertTrue(resolved in files, f'{destination}: {link}')
 
     def test_unitypackage_contains_runtime_demo_and_not_project_state(self):
         files = build_unitypackage.export_sources()

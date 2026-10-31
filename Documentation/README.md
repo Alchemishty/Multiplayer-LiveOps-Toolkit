@@ -4,11 +4,13 @@ These guides explain what the toolkit provides and how to use it. Start with the
 
 | Guide | What it covers |
 |---|---|
-| [Unity 6 setup](unity6.md) | Supported Unity version, fresh-project installation and required demo setup |
+| [Install the toolkit](../Unity/Packages/com.alchemishty.multiplayer-liveops-toolkit/Documentation~/installation.md) | Canonical installation formats, dependencies and updates |
+| [Service recipes](../Unity/Packages/com.alchemishty.multiplayer-liveops-toolkit/Documentation~/recipes.md) | Custom UI, purchases, equipment, rewards and backend adapters |
+| [Unity 6 setup](unity6.md) | Unity 6-specific setup and qualification limits |
 | [Run the demo](getting-started.md) | Repository setup, backend/accounts, trust configuration and two-instance play |
 | [Android setup and build](android.md) | Verified Android support, emulator/tools, backend forwarding, APK build and multiplayer |
 | [Classic .unitypackage](unitypackage.md) | Release download, dependencies, import and building the distribution |
-| [Package integration](package-integration.md) | Fresh-project installation, Full Demo import, module composition and custom integrations |
+| [Package integration](package-integration.md) | Integration entry points and package/demo maintenance |
 | [Architecture decisions](architecture-decisions.md) | Chosen designs, alternatives, reasons and tradeoffs |
 | [Roadmap](roadmap.md) | Remaining gaps and planned expansion |
 | [Backend operations](backend-operations.md) | Reference-backend content, accounts, configuration and hosting limits |

@@ -12,6 +12,37 @@ The current schema includes equipment revision ordering and achievement claim st
 
 For a local Android build, keep Django on the development computer and use the [Android backend/forwarding setup](android.md#configure-the-backend-and-public-trust). The APK bundles exported public trust only; it does not contain the backend or private signing key. A remote backend must use HTTPS for player credential requests.
 
+## Local Compose setup
+
+Prepare `backend/.env` and signing/public trust using [Run the demo](getting-started.md#prepare-the-backend). Compose reads `.env` directly, unlike a plain Django shell. Mount the private key into the container and set its **container** path; the host key path alone is not accessible there.
+
+For example, create `$HOME/.config/liveops/compose.local.yaml` outside the repository with the following contents. Replace `/absolute/host/path/identity-proof.pem` with your existing private-key path:
+
+```yaml
+services:
+  backend:
+    environment:
+      LIVEOPS_PROOF_PRIVATE_KEY_FILE: /run/secrets/liveops-identity.pem
+    volumes:
+      - /absolute/host/path/identity-proof.pem:/run/secrets/liveops-identity.pem:ro
+```
+
+Run from the repository root after filling all signing context values in `backend/.env`:
+
+```sh
+docker compose -f docker-compose.yml -f "$HOME/.config/liveops/compose.local.yaml" up --build
+```
+
+In another terminal, create the administrator and export public trust from that same configured backend:
+
+```sh
+docker compose -f docker-compose.yml -f "$HOME/.config/liveops/compose.local.yaml" exec backend python manage.py createsuperuser
+mkdir -p Unity/Assets/StreamingAssets
+docker compose -f docker-compose.yml -f "$HOME/.config/liveops/compose.local.yaml" exec -T backend python manage.py export_identity_trust > Unity/Assets/StreamingAssets/LiveOpsIdentityTrust.json
+```
+
+Use your consuming project's StreamingAssets path instead when appropriate. Continue with [player accounts](getting-started.md#start-the-backend-and-create-player-accounts). Compose applies committed migrations and seeds content at startup; SQLite data persists in its named volume. This local arrangement does not configure production TLS or database operations.
+
 ## Content authoring
 
 Use Django admin and existing management commands for this version:
@@ -30,7 +61,7 @@ Use the [proof configuration/export guide](multiplayer-identity-verification.md)
 
 The supplied Compose file binds localhost and uses sample SQLite settings. It does not provision TLS, public/private proof files, backups or a production database. Merely changing `DEBUG=False` does not finish deployment configuration. Set independent Django/session secrets, explicit allowed hosts and restrictive key permissions; never ship the development defaults. Non-loopback Unity credential requests require HTTPS and reject redirects.
 
-A `manage.py check --deploy` run with DEBUG false and ephemeral strong secrets reports four outstanding settings warnings in the unmodified sample: HSTS (`security.W004`), HTTPS redirection (`W008`), secure session cookie (`W012`) and secure CSRF cookie (`W016`). Supply reviewed environment-specific Django settings and HTTPS proxy behavior before public deployment; the sample currently does not expose environment toggles for those settings. Re-run the deployment check against the settings actually deployed. Do not suppress warnings to claim qualification.
+The unmodified sample has four outstanding `manage.py check --deploy` settings warnings with DEBUG false and strong secrets: HSTS (`security.W004`), HTTPS redirection (`W008`), secure session cookie (`W012`) and secure CSRF cookie (`W016`). Supply reviewed environment-specific Django settings and HTTPS proxy behavior before public deployment; the sample currently does not expose environment toggles for those settings. Re-run the deployment check against the settings actually deployed. Do not suppress warnings to claim qualification.
 
 For an actual game deployment, choose and qualify the database/concurrency behavior, shared throttle cache, web-server/proxy timeouts, secure admin access, secret rotation, logging privacy and backup/restore. Existing local transaction tests do not certify a multi-worker production service. These responsibilities belong to the consuming game, not additional mandatory frontend abstractions.
 

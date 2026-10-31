@@ -20,7 +20,7 @@ public class PurchaseValidator               // Pure C#: affordability checks, o
 public class ShopService                     // API communication: fetch items, submit purchases
 ```
 
-**When to split:** If you can describe what a class does and use the word "and", it has multiple responsibilities. "Displays shop items" is one. "Displays shop items and validates purchases and calls the API" is three.
+**When to split:** Separate responsibilities when a concrete implemented consumer needs the boundary. Name that consumer and the existing responsibility being replaced; reuse an existing owner where it already fits. The word "and" in a class description does not establish multiple responsibilities.
 
 ### MonoBehaviour containing business logic
 ```csharp
@@ -89,7 +89,7 @@ This step creates/modifies:
 - ShopService (API communication: fetch items, submit purchases)
 ```
 
-**If any class description uses "and", split before coding.** This catches god classes at design time, not during review.
+**Justify each new abstraction with a concrete implemented consumer and the responsibility it replaces.** A class description containing "and" does not require a split.
 
 This declaration is not optional. Skipping it and going straight to code is a violation.
 
@@ -97,7 +97,7 @@ This declaration is not optional. Skipping it and going straight to code is a vi
 
 For each new or modified class:
 1. Was a pre-code architecture declaration written?
-2. Can you describe its job without "and"?
+2. Does each proposed abstraction serve a concrete implemented consumer and replace a named responsibility?
 3. Does it mix UI + logic, or API + logic, or networking + business rules?
 4. Could the business logic be tested in EditMode if extracted?
 5. Do its references only point to same-layer or lower-layer code?

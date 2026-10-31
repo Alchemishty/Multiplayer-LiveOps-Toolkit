@@ -7,7 +7,7 @@ This folder records how the project is built and how future changes should be ma
 | [Architecture](architecture.md) | Technical layers, state ownership, composition and implementation notes |
 | [Conventions](conventions.md) | Coding standards and design rules |
 | [Domain](domain.md) | Domain terminology, contracts and Netcode constraints |
-| [Testing](testing.md) | Test strategy, regression practices and historical verification notes |
+| [Testing](testing.md) | Test strategy, commands, qualification evidence and compatibility notes |
 
 Start with [AGENTS.md](../AGENTS.md). [Enforcement](../enforcement/) remains contributor/agent tooling. Use [project documentation](../Documentation/README.md) for installation, backend operation, multiplayer proof setup and current qualification limits.
 

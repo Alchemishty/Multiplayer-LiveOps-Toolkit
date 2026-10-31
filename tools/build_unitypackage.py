@@ -38,6 +38,7 @@ def export_content(relative, source):
     data = source.read_bytes()
     if relative.suffix == '.md':
         data = data.replace(b'../Samples~/FullDemo/', b'../FullDemo/')
+        data = data.replace(b'../../Documentation~/', b'../Documentation/')
     return data
 
 

@@ -2,17 +2,18 @@
 
 The complete playable multiplayer demo: Django username/password login, wallet/conversion, categorized shop and sets, inventory, local preview, equipment, achievements/toasts, daily rewards and development reset. It includes the authored modular character, animated movement, cosmetic prefabs, visual catalogs and TMP UI. Reusable mechanics/avatar/rendering/control code comes from the toolkit runtime.
 
-## Setup in Unity 2022.3 or Unity 6.3 LTS
+## Setup
 
-1. Use a Built-in Render Pipeline project. On Unity 2022.3, install TextMeshPro **3.0.6** and uGUI **1.0.0**. On Unity 6.3, use uGUI **2.0.0**, which includes TextMeshPro, without the separate TextMeshPro package. Enable **Input Manager (Old)** or **Both** under Active Input Handling for the supplied character controls.
+First [install the toolkit and editor-specific dependencies](../../Documentation~/installation.md). Then:
+
+1. Use a **Built-in Render Pipeline** project and enable **Input Manager (Old)** or **Both** under Active Input Handling for the supplied controls.
 2. Import **Window > TextMeshPro > Import TMP Essential Resources**.
-3. For UPM, import **Full Demo** from Package Manager > Multiplayer LiveOps Toolkit > Samples. For the classic `.unitypackage`, Full Demo is already included under `Assets/MultiplayerLiveOpsToolkit/FullDemo/`.
-4. Open **Scenes/ExampleScene.unity** inside the imported Full Demo folder. Add this scene to Build Settings when making a player.
-5. Run the reference Django backend from the toolkit repository's `backend/` folder. Migrate/seed the reference content and create accounts through its admin/management commands. See repository `Documentation/backend-operations.md`. Default URL: `http://localhost:8000`; use the sample's `ApiConfig.SetBaseUrl` to override it.
-6. Configure backend proof signing and public verification trust as described in repository `Documentation/multiplayer-identity-verification.md`. Put public trust at `Assets/StreamingAssets/LiveOpsIdentityTrust.json`, or set `LIVEOPS_IDENTITY_TRUST_FILE` before starting Unity/player. Never copy the backend's private signing key into Unity.
-7. Press Play and sign in. The first instance tries client then falls back to hosting; a second instance, signed in with a different account, joins it. A server role uses `-liveops-server` with public trust and no local account login.
+3. For UPM, import **Full Demo** from Package Manager > Multiplayer LiveOps Toolkit > Samples. The classic `.unitypackage` includes it under `Assets/MultiplayerLiveOpsToolkit/FullDemo/`.
+4. Open **Scenes/ExampleScene.unity** inside the imported Full Demo folder. Add it to Build Settings (Unity 2022.3) or the active Build Profile (Unity 6) when making a player.
+5. Complete the repository's [backend, accounts and public-trust walkthrough](https://github.com/Alchemishty/Multiplayer-LiveOps-Toolkit/blob/main/Documentation/getting-started.md#prepare-the-backend). Export public trust to this project's `Assets/StreamingAssets/LiveOpsIdentityTrust.json`.
+6. Press Play and sign in. The first instance tries client then falls back to hosting; a second instance with another account joins it. A server role uses `-liveops-server` with public trust and no local account login.
 
-The backend is a separately hosted sample, not a process installed or started by the Unity package. Source repository: https://github.com/Alchemishty/Multiplayer-LiveOps-Toolkit.
+The backend runs separately from the Unity package. Its default URL is `http://localhost:8000`; call `ApiConfig.SetBaseUrl` before authentication to override it. Keep backend private keys outside Unity. For custom UI and commands, see [service recipes](../../Documentation~/recipes.md).
 
 ## Android builds
 
