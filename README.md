@@ -2,7 +2,8 @@
 
 A modular Unity package for the live-ops layer of multiplayer games: player accounts, currencies, shops, cosmetic inventories, equipment, achievements and daily rewards, with server-verified cosmetics shared across Netcode for GameObjects sessions. Pick the modules you need, keep your own art and UI, and connect the included Django backend or your own.
 
-https://github.com/user-attachments/assets/6a7ee96b-8809-4a31-9c5c-ef946abc443f
+https://github.com/user-attachments/assets/de4b25eb-98dc-4090-a11d-7f821b8d1078
+
 
 [![Unity 2022.3 | 6.3 LTS](https://img.shields.io/badge/Unity-2022.3%20%7C%206.3%20LTS-blue.svg)](https://unity.com/)
 [![Netcode 1.9.1](https://img.shields.io/badge/Netcode-1.9.1-green.svg)](https://docs-multiplayer.unity3d.com/netcode/current/about/)
